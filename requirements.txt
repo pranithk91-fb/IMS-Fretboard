@@ -1,0 +1,5 @@
+Flask
+libsql-client>=0.3.0
+configparser
+requests
+pandas

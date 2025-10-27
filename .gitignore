@@ -1,0 +1,62 @@
+# Environment files
+.env
+.env.*
+.env.local
+.env.render
+.env.production
+.env.development
+
+# Database files
+MedicalStore.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Development/test files
+sqlite_test.py
+add_user.py
+db_test.py
+update_payment_schema.py
+test_payments.py
+
+# Documentation files (if needed to exclude)
+ERROR_HANDLING_STRATEGIES.md
+LOGGING_IMPLEMENTATION_GUIDE.md
+
+# Template files (development versions)
+templates/test.html
+templates/inventory_3.html
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+keep_alive_external.py
+__pycache__/inventory.cpython-310.pyc
+db_backup_to_local.py
+Untitled-1.ipynb
+inventory_old.py
+templates/inventory_old.html
+static/css/inventory_old.css
+database/OldDeliveries.sql
+__pycache__/inventory.cpython-310.pyc
+static/js/test-data.js
+check_db.py
+db_update.py

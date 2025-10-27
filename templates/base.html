@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}IMS - Medical Inventory{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <!-- Favicon - Logo in browser tab -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='Logo.png') }}">
+  <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='Logo.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='Logo.png') }}">
+  
+  <!-- Main CSS Files -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+ 
+
+  <div class="layout">
+    <!-- Sidebar (shared) -->
+     
+    <aside class="sidebar">
+      
+      <a href="{{ url_for('patient.patient_form') }}" class="nav-btn {{ 'active' if active_page == 'op' else '' }}">OP</a>
+      <a href="{{ url_for('pharmacy') }}" class="nav-btn {{ 'active' if active_page == 'pharmacy' else '' }}">Pharmacy</a>
+      <a href="{{ url_for('view_sales') }}" class="nav-btn {{ 'active' if active_page == 'view_sales' else '' }}">View Sales</a>
+      <a href="{{ url_for('returns') }}" class="nav-btn {{ 'active' if active_page == 'returns' else '' }}">Returns</a>
+      <a href="{{ url_for('reports.reports') }}" class="nav-btn {{ 'active' if active_page == 'price_update' else '' }}">Reports</a>
+      <a href="{{ url_for('inventory.inventory') }}" class="nav-btn {{ 'active' if active_page == 'inventory' else '' }}">Inventory</a>
+      <a href="{{ url_for('payments.payments') }}" class="nav-btn {{ 'active' if active_page == 'payments' else '' }}">Payments</a>
+    </aside>
+    
+    <div class="main-area">
+
+      <!-- Header with date/time and logout, aligned top-right next to sidebar -->
+      <header class="main-header">
+        <div id="date-time"></div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+      </header>
+
+      <!-- Main content area -->
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  {% block scripts %}{% endblock %}
+
+  <script>
+    // Live updating date and time
+    function updateDateTime() {
+      const now = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      const date = now.toLocaleDateString(undefined, options);
+      const time = now.toLocaleTimeString();
+      document.getElementById('date-time').textContent = date + ' | ' + time;
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+  </script>
+  
+</body>
+</html>

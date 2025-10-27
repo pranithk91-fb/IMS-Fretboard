@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: flask-turso-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: TURSO_URL
+        sync: false
+      - key: TURSO_TOKEN
+        sync: false

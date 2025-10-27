@@ -1,0 +1,823 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/inventory.css') }}">
+{% endblock %}
+
+{% block title %}Inventory - IMS{% endblock %}
+{% block content %}
+
+<div class="inventory-container">
+    <header class="page-header">
+        <h1 class="page-title">📦 Inventory Purchase Entry</h1>
+        <div class="quick-actions">
+            <button type="button" class="btn-action" onclick="saveDraft()">💾 Save Draft</button>
+            <button type="button" class="btn-action" onclick="loadTemplate()">📋 Template</button>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('inventory.inventory') }}" class="inventory-form" id="inventoryForm">
+        <div class="main-layout">
+            <!-- Left Panel: Bill Details -->
+            <div class="left-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3>📋 Bill Information</h3>
+                        <div class="completion-indicator" id="billCompletion">
+                            <span class="completion-text">Auto-calculated</span>
+                            <div class="completion-bar">
+                                <div class="completion-fill" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bill-form">
+                        <div class="form-group">
+                            <label for="BillDate" class="required">Bill Date</label>
+                            <input type="date" id="BillDate" name="BillDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="BillNo" class="required">Bill Number</label>
+                            <input type="text" id="BillNo" name="BillNo" required placeholder="Enter bill number">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="DeliveryDate" class="required">Delivery Date</label>
+                            <input type="date" id="DeliveryDate" name="DeliveryDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Agency" class="required">Agency</label>
+                            <select id="Agency" name="Agency" class="agency-select" required>
+                                <option value="">Select Agency</option>
+                                {% for name in agency_list %}
+                                    <option value="{{ name }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="BillAmount" class="required">Bill Amount</label>
+                                <input type="number" step="0.01" id="BillAmount" name="BillAmount" min="0" required placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label for="TaxAmount" class="required">Tax Amount</label>
+                                <input type="number" step="0.01" id="TaxAmount" name="TaxAmount" min="0" required placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="DiscountInBill" class="required">Discount</label>
+                                <select id="DiscountInBill" name="DiscountInBill" required>
+                                    <option value="">Select</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="Disc_amount" class="required">Discount Amount</label>
+                                <input type="number" step="0.01" id="Disc_amount" name="Disc_amount" min="0" required placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="BillTotal">Bill Total <span class="auto-calc-note">(Auto-calculated)</span></label>
+                            <input type="number" step="0.01" id="BillTotal" name="BillTotal" min="0" readonly class="bill-total-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Items Management -->
+            <div class="right-panel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3>📋 Items in Bill</h3>
+                        <div class="header-actions">
+                            <button type="button" class="btn-add-medicine-header" onclick="openNewMedicineModal()">
+                                ➕ Add Medicine
+                            </button>
+                            <button type="button" class="btn-update-price-header" onclick="openUpdatePriceModal()">
+                                💰 Update Price
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Smart Item Entry -->
+                    <div class="item-entry-section">
+                        <div class="search-row">
+                            <div class="smart-search">
+                                <label for="ItemName">Medicine Search</label>
+                                <select id="ItemName" name="item-select" class="item-select">
+                                    <option value="">Select Medicine</option>
+                                    {% for name in med_list %}
+                                        <option value="{{ name }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Medicine Details Display -->
+                        <div id="item-details" class="medicine-info"></div>
+                        
+                        <!-- Item Details Form -->
+                        <div class="item-details-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="Quantity" class="required">Quantity</label>
+                                    <input type="number" id="Quantity" name="new-quantity" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="BatchNo" class="required">Batch No</label>
+                                    <input type="text" id="BatchNo" name="new-batch_no">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ExpiryDate" class="required">Expiry Date</label>
+                                    <input type="month" id="ExpiryDate" name="new-expiry_date">
+                                </div>
+                                <div class="form-group">
+                                    <label for="Price" class="required">Price</label>
+                                    <input type="number" step="0.01" id="Price" name="new-price">
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn-add-item" onclick="addItem()">
+                                ➕ Add Item
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Items Table -->
+                    <div class="items-table-section">
+                        <div class="table-header">
+                            <span>Added Items</span>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table class="items-table" id="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Quantity</th>
+                                        <th>Batch No</th>
+                                        <th>Expiry Date</th>
+                                        <th>Price</th>
+                                        <th>Price Diff</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="items-list">
+                                    <!-- Rows will be added here -->
+                                </tbody>
+                            </table>
+                            
+                            <div class="empty-state" id="emptyState" style="display: block;">
+                                <div class="empty-icon">📦</div>
+                                <p>No items added yet</p>
+                                <small>Select a medicine above to start adding items</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Actions -->
+        <div class="bottom-actions">
+            <div class="left-actions">
+                <button type="button" class="btn-secondary" onclick="resetForm()">🔄 Reset Form</button>
+            </div>
+            <button type="submit" class="btn-primary" onclick="debugFormSubmission(event)">💾 Save Purchase</button>
+        </div>
+    </form>
+</div>
+
+<!-- Add New Medicine Modal -->
+<div id="newMedicineModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>➕ Add New Medicine</h3>
+            <button class="modal-close" onclick="closeNewMedicineModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="newMedicineForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newMedicineName" class="required">Medicine Name</label>
+                        <input type="text" id="newMedicineName" name="MName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newMedicineCompany">Company</label>
+                        <input type="text" id="newMedicineCompany" name="MCompany">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newMedicineType" class="required">Type</label>
+                        <select id="newMedicineType" name="Mtype" required>
+                            <option value="">Select Type</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newMedicineMRP">MRP</label>
+                        <input type="number" step="0.01" id="newMedicineMRP" name="MRP" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newMedicineGST">GST %</label>
+                        <input type="number" step="0.01" id="newMedicineGST" name="GST" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMedicineHSN">HSN Code</label>
+                        <input type="text" id="newMedicineHSN" name="HSN">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newMedicinePTR">PTR</label>
+                        <input type="number" step="0.01" id="newMedicinePTR" name="PTR" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMedicineWeight">Weight/Pack Size</label>
+                        <input type="text" id="newMedicineWeight" name="Weight" placeholder="e.g., 10mg, 100ml">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newMedicineOffer1">Offer 1</label>
+                        <input type="text" id="newMedicineOffer1" name="Offer1" placeholder="e.g., Buy 2 Get 1">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMedicineOffer2">Offer 2</label>
+                        <input type="text" id="newMedicineOffer2" name="Offer2" placeholder="e.g., 10% Off">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeNewMedicineModal()">Cancel</button>
+            <button type="button" class="btn-primary" onclick="saveNewMedicine()">Save Medicine</button>
+        </div>
+    </div>
+</div>
+
+<!-- Update Price Modal -->
+<div id="updatePriceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💰 Update Medicine Price</h3>
+            <button class="modal-close" onclick="closeUpdatePriceModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="POST" action="{{ url_for('inventory.update_price') }}" id="updatePriceForm">
+                <div class="form-group">
+                    <label for="updateMedicineName" class="required">Medicine Name</label>
+                    <select id="updateMedicineName" name="medicine_name" required onchange="loadMedicineDetails(this.value)">
+                        <option value="">Select Medicine</option>
+                        {% for name in med_list %}
+                            <option value="{{ name }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Current Values Display -->
+                <div class="price-comparison" id="currentValuesSection" style="display: none;">
+                    <div class="current-prices">
+                        <h4>Current Values</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>MRP</label>
+                                <input type="text" id="currentMRP" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>PTR</label>
+                                <input type="text" id="currentPTR" readonly>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>HSN</label>
+                                <input type="text" id="currentHSN" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>GST %</label>
+                                <input type="text" id="currentGST" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="new-prices" id="newValuesSection">
+                        <h4>New Values</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newMRP" class="required">New MRP</label>
+                                <input type="number" step="0.01" id="newMRP" name="new_mrp" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPTR">New PTR</label>
+                                <input type="number" step="0.01" id="newPTR" name="new_ptr" min="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newHSN">New HSN Code</label>
+                                <input type="text" id="newHSN" name="new_hsn">
+                            </div>
+                            <div class="form-group">
+                                <label for="newGST">New GST %</label>
+                                <input type="number" step="0.01" id="newGST" name="new_gst" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hidden fields -->
+                <input type="hidden" id="oldMRP" name="old_mrp">
+                <input type="hidden" id="oldPTR" name="old_ptr">
+                <input type="hidden" id="oldHSN" name="old_hsn">
+                <input type="hidden" id="oldGST" name="old_gst">
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeUpdatePriceModal()">Cancel</button>
+            <button type="button" class="btn-primary" onclick="submitPriceUpdate()" id="updatePriceBtn" style="display: none;">Update Price</button>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery & Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+var currentMRP = null;
+
+// Initialize Select2 and event listeners when DOM is ready
+$(document).ready(function() {
+  // Initialize Select2
+  $('.agency-select').select2({
+    placeholder: "Select Agency",
+    allowClear: true,
+    width: 'resolve'
+  });
+  
+  $('.item-select').select2({
+    placeholder: "Select Medicine",
+    allowClear: true,
+    width: 'resolve'
+  });
+    
+  $('.item-select').on('change', function() {
+    var $select = $(this);
+    var itemName = $select.val();
+    var $detailsDiv = $('#item-details');
+    
+    if (itemName) {
+      $.get('/api/medicine-details', {name: itemName}, function(data) {
+        // First row: Weight, MRP, GST, Offer1+Offer2
+        let offer = '';
+        if (data.Offer1 && data.Offer2) offer = data.Offer1 + '+' + data.Offer2;
+        else if (data.Offer1) offer = data.Offer1 + "-NoOffer";
+        else if (data.Offer2) offer = data.Offer2 + "-Check";
+
+        let row1 = '';
+        if (data.Weight) row1 += `Weight: ${data.Weight} • `;
+        if (data.MRP) {
+          row1 += `MRP: ₹${data.MRP} • `;
+          currentMRP = parseFloat(data.MRP);
+        } else {
+          currentMRP = null;
+        };
+        if (data.GST) row1 += `GST: ${data.GST}% • `;
+        if (offer) row1 += `Offer: ${offer} • `;
+
+        // Second row: Company, Type, HSN, PTR
+        let row2 = '';
+        if (data.MCompany) row2 += `Company: ${data.MCompany} • `;
+        if (data.Mtype) row2 += `Type: ${data.Mtype} • `;
+        if (data.HSN) row2 += `HSN: ${data.HSN} • `;
+        if (data.PTR) row2 += `PTR: ₹${data.PTR} • `;
+
+        $detailsDiv.html(
+          `<div class="info-grid">
+             <div class="info-row">${row1.replace(/ • $/, '')}</div>
+             <div class="info-row">${row2.replace(/ • $/, '')}</div>
+           </div>`
+        ).show();
+      }).fail(function() {
+        console.error('Failed to load medicine details');
+        currentMRP = null;
+        $detailsDiv.hide().html('');
+      });
+    } else {
+      $detailsDiv.hide().html('');
+      currentMRP = null;
+    }
+  });
+  
+  // Initialize bill calculation on page load
+  setupBillCalculation();
+  updateEmptyState();
+});
+
+// Bill Total Calculation Function
+function calculateBillTotal() {
+  const billAmount = parseFloat(document.getElementById('BillAmount')?.value) || 0;
+  const taxAmount = parseFloat(document.getElementById('TaxAmount')?.value) || 0;
+  const discountInBill = document.getElementById('DiscountInBill')?.value;
+  const discAmount = parseFloat(document.getElementById('Disc_amount')?.value) || 0;
+  
+  let billTotal = 0;
+  
+  if (discountInBill === 'No') {
+    billTotal = billAmount + taxAmount;
+  } else if (discountInBill === 'Yes') {
+    billTotal = billAmount + taxAmount - discAmount;
+  } else {
+    // Default case when no discount option is selected
+    billTotal = billAmount + taxAmount;
+  }
+  
+  // Ensure total is not negative
+  billTotal = Math.max(0, billTotal);
+  
+  // Update the display
+  const billTotalInput = document.getElementById('BillTotal');
+  if (billTotalInput) {
+    billTotalInput.value = billTotal.toFixed(2);
+  }
+  
+  console.log('Bill calculation:', {
+    billAmount,
+    taxAmount,
+    discountInBill,
+    discAmount,
+    billTotal: billTotal.toFixed(2)
+  });
+}
+
+// Setup bill calculation event listeners
+function setupBillCalculation() {
+  const fieldsToWatch = ['BillAmount', 'TaxAmount', 'DiscountInBill', 'Disc_amount'];
+  
+  fieldsToWatch.forEach(fieldId => {
+    const element = document.getElementById(fieldId);
+    if (element) {
+      // Remove existing listeners to prevent duplicates
+      element.removeEventListener('input', calculateBillTotal);
+      element.removeEventListener('change', calculateBillTotal);
+      
+      // Add new listeners
+      element.addEventListener('input', calculateBillTotal);
+      element.addEventListener('change', calculateBillTotal);
+      
+      console.log(`Added event listeners to ${fieldId}`);
+    } else {
+      console.warn(`Element with id ${fieldId} not found`);
+    }
+  });
+  
+  // Initial calculation
+  calculateBillTotal();
+}
+
+function updateEmptyState() {
+    const tableBody = document.getElementById('items-list');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (tableBody && emptyState) {
+        if (tableBody.children.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+}
+
+function addItem() {
+  // Get values from the form
+  var itemName = document.getElementById('ItemName');
+  var itemNameText = itemName.options[itemName.selectedIndex].text;
+  var quantity = document.getElementById('Quantity').value;
+  var batchNo = document.getElementById('BatchNo').value;
+  var expiryDate = document.getElementById('ExpiryDate').value;
+  var price = document.getElementById('Price').value;
+
+  // Calculate difference
+  var difference = 0;
+  if (currentMRP !== null && price) {
+    difference = (parseFloat(price) - currentMRP).toFixed(2);
+  }
+
+  if (!itemName.value || !quantity || !batchNo || !expiryDate || !price) {
+    alert('Please fill all item fields.');
+    return;
+  }
+
+  // Add row to table
+  var table = document.getElementById('items-list');
+  var row = table.insertRow();
+  
+  const diffClass = difference >= 0 ? 'positive' : 'negative';
+  const diffDisplay = difference >= 0 ? `+₹${difference}` : `₹${difference}`;
+  
+  row.innerHTML = `
+    <td>
+        <input type="hidden" name="item_name" value="${itemName.value}">
+        <strong>${itemNameText}</strong>
+    </td>
+    <td>
+        <input type="hidden" name="quantity" value="${quantity}">
+        ${quantity}
+    </td>
+    <td>
+        <input type="hidden" name="batch_no" value="${batchNo}">
+        ${batchNo}
+    </td>
+    <td>
+        <input type="hidden" name="expiry_date" value="${expiryDate}">
+        ${expiryDate}
+    </td>
+    <td>
+        <input type="hidden" name="price" value="${price}">
+        ₹${parseFloat(price).toFixed(2)}
+    </td>
+    <td>
+        <input type="hidden" name="difference" value="${difference}">
+        <span class="price-diff ${diffClass}">${diffDisplay}</span>
+    </td>
+    <td>
+        <button type="button" class="btn-remove" onclick="removeRow(this)" title="Remove item">
+            ×
+        </button>
+    </td>
+  `;
+
+  // Clear form fields
+  $('#ItemName').val('').trigger('change');
+  $('#item-details').hide().html('');
+  document.getElementById('Quantity').value = '';
+  document.getElementById('BatchNo').value = '';
+  document.getElementById('ExpiryDate').value = '';
+  document.getElementById('Price').value = '';
+  currentMRP = null;
+  
+  updateEmptyState();
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  updateEmptyState();
+}
+
+function resetForm() {
+    if (confirm('Are you sure you want to reset the entire form? All data will be lost.')) {
+        document.getElementById('inventoryForm').reset();
+        document.getElementById('items-list').innerHTML = '';
+        $('#ItemName').val('').trigger('change');
+        $('#Agency').val('').trigger('change');
+        $('#item-details').hide().html('');
+        currentMRP = null;
+        updateEmptyState();
+        calculateBillTotal();
+    }
+}
+
+function saveDraft() {
+    alert('Draft saving feature coming soon!');
+}
+
+function loadTemplate() {
+    alert('Template loading feature coming soon!');
+}
+
+// Modal Functions
+function openNewMedicineModal() {
+  document.getElementById('newMedicineModal').style.display = 'block';
+  document.getElementById('newMedicineForm').reset();
+  loadMedicineTypes();
+}
+
+function loadMedicineTypes() {
+  fetch('/api/medicine-types')
+  .then(response => response.json())
+  .then(data => {
+    const typeSelect = document.getElementById('newMedicineType');
+    typeSelect.innerHTML = '<option value="">Select Type</option>';
+    
+    if (data.success && data.types) {
+      data.types.forEach(typeInfo => {
+        const option = document.createElement('option');
+        option.value = typeInfo.type;
+        option.textContent = `${typeInfo.type} (Next ID: ${typeInfo.next_id})`;
+        typeSelect.appendChild(option);
+      });
+    } else {
+      console.error('Failed to load medicine types:', data.error);
+      const fallbackTypes = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Drops', 'Other'];
+      fallbackTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        typeSelect.appendChild(option);
+      });
+    }
+  })
+  .catch(error => {
+    console.error('Error loading medicine types:', error);
+    const typeSelect = document.getElementById('newMedicineType');
+    const fallbackTypes = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Drops', 'Other'];
+    fallbackTypes.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type;
+      option.textContent = type;
+      typeSelect.appendChild(option);
+    });
+  });
+}
+
+function closeNewMedicineModal() {
+  document.getElementById('newMedicineModal').style.display = 'none';
+}
+
+function saveNewMedicine() {
+  const form = document.getElementById('newMedicineForm');
+  const formData = new FormData(form);
+  
+  const medicineName = formData.get('MName').trim();
+  const medicineType = formData.get('Mtype').trim();
+  
+  if (!medicineName) {
+    alert('Please enter medicine name');
+    return;
+  }
+  
+  if (!medicineType) {
+    alert('Please select medicine type');
+    return;
+  }
+  
+  const medicineData = {};
+  formData.forEach((value, key) => {
+    medicineData[key] = value;
+  });
+  
+  fetch('/api/add-medicine', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(medicineData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const select = document.getElementById('ItemName');
+      const option = new Option(medicineData.MName, medicineData.MName);
+      select.add(option);
+      
+      $(select).val(medicineData.MName).trigger('change');
+      
+      closeNewMedicineModal();
+      alert('Medicine added successfully!');
+    } else {
+      alert('Error adding medicine: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error adding medicine. Please try again.');
+  });
+}
+
+// Update Price Modal Functions
+function openUpdatePriceModal() {
+    document.getElementById('updatePriceModal').style.display = 'block';
+    document.getElementById('updatePriceForm').reset();
+    document.getElementById('currentValuesSection').style.display = 'none';
+    document.getElementById('updatePriceBtn').style.display = 'none';
+}
+
+function closeUpdatePriceModal() {
+    document.getElementById('updatePriceModal').style.display = 'none';
+}
+
+function loadMedicineDetails(medicineName) {
+    if (medicineName) {
+        fetch(`/api/medicine-details?name=${encodeURIComponent(medicineName)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data) {
+                document.getElementById('currentMRP').value = data.MRP || 'Not set';
+                document.getElementById('currentPTR').value = data.PTR || 'Not set';
+                document.getElementById('currentHSN').value = data.HSN || 'Not set';
+                document.getElementById('currentGST').value = data.GST || 'Not set';
+                
+                document.getElementById('oldMRP').value = data.MRP || '';
+                document.getElementById('oldPTR').value = data.PTR || '';
+                document.getElementById('oldHSN').value = data.HSN || '';
+                document.getElementById('oldGST').value = data.GST || '';
+                
+                document.getElementById('newMRP').value = data.MRP || '';
+                document.getElementById('newPTR').value = data.PTR || '';
+                document.getElementById('newHSN').value = data.HSN || '';
+                document.getElementById('newGST').value = data.GST || '';
+                
+                document.getElementById('currentValuesSection').style.display = 'block';
+                document.getElementById('updatePriceBtn').style.display = 'inline-block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading medicine details:', error);
+            alert('Error loading medicine details. Please try again.');
+        });
+    } else {
+        document.getElementById('currentValuesSection').style.display = 'none';
+        document.getElementById('updatePriceBtn').style.display = 'none';
+    }
+}
+
+function submitPriceUpdate() {
+    const medicineName = document.getElementById('updateMedicineName').value;
+    const newMRP = document.getElementById('newMRP').value;
+    
+    if (!medicineName) {
+        alert('Please select a medicine');
+        return;
+    }
+    
+    if (!newMRP || parseFloat(newMRP) <= 0) {
+        alert('Please enter a valid new MRP');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to update the price for ${medicineName}?`)) {
+        document.getElementById('updatePriceForm').submit();
+    }
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const newMedicineModal = document.getElementById('newMedicineModal');
+    const updatePriceModal = document.getElementById('updatePriceModal');
+    
+    if (event.target === newMedicineModal) {
+        closeNewMedicineModal();
+    } else if (event.target === updatePriceModal) {
+        closeUpdatePriceModal();
+    }
+}
+
+// Keep your original debug function
+function debugFormSubmission(event) {
+  const form = event.target.form;
+  const formData = new FormData(form);
+  
+  console.log("=== FORM SUBMISSION DEBUG ===");
+  console.log("Form element:", form);
+  console.log("Hidden inputs in table:", document.querySelectorAll('#items-table input[type="hidden"]'));
+  console.log("All form elements:", form.elements);
+  
+  console.log("FormData entries:");
+  for (let [key, value] of formData.entries()) {
+    console.log(`${key}: ${value}`);
+  }
+  
+  console.log("Item names specifically:", formData.getAll('item_name'));
+  console.log("Quantities specifically:", formData.getAll('quantity'));
+  
+  return true;
+}
+
+</script>
+<!-- Test Data Module (only in development) -->
+{% if config.get('ENABLE_TEST_DATA') == '1' %}
+<script src="{{ url_for('static', filename='js/test-data.js') }}"></script>
+{% endif %}
+
+</script>
+{% endblock %}

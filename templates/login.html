@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - IMS | Dr.Preethi's Medical Store</title>
+    
+    <!-- Favicon - Logo in browser tab -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='Logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='Logo.png') }}">
+    
+    <!-- Main CSS Files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <div class="fb-bg">
+        <div class="fb-container">
+            <div class="fb-header">
+                <img src="{{ url_for('static', filename='Logo.png') }}" alt="Dr.Preethi's Logo" class="fb-logo-image">
+                <p class="fb-info">Welcome!</p>
+            </div>
+            <form method="POST" class="fb-form">
+                <input type="text" name="username" placeholder="Email or phone number" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+                <a href="#" class="fb-forgot">Forgot password?</a>
+                {% if error %}
+                  <p class="fb-error">{{ error }}</p>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</body>
+</html>

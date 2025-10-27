@@ -1,0 +1,326 @@
+/* ================================
+   PATIENT FORM PAGE SPECIFIC STYLES
+   ================================ */
+
+/* Patient Form Layout */
+.patient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Legend Styling for Section Headers */
+.patient-form legend:first-of-type {
+  background: linear-gradient(135deg, #da7422, #b8611c);
+  color: white;
+  padding: 12px 20px;
+  margin: -16px -24px 20px -24px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  width: calc(100% + 48px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Search Container Legend */
+.search-container legend {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  padding: 10px 18px;
+  margin: 30px -24px 16px -24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  width: calc(100% + 48px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.search-container legend::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #ddd, transparent);
+}
+
+/* Table Container Legend */
+.table-container legend {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
+  padding: 10px 18px;
+  margin: 30px -24px 16px -24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  width: calc(100% + 48px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.table-container legend::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #ddd, transparent);
+}
+
+/* Form Row Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 items per row */
+  gap: 16px;
+}
+
+/* Field Styling */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-wide {
+  grid-column: span 2; /* Takes 2 columns */
+}
+
+/* Search Container */
+.search-container { 
+  margin-top: 20px; 
+}
+
+.search-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 equal columns for better centering */
+  gap: 16px;
+  align-items: end;
+  justify-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-form .field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.search-form .field input,
+.search-form .field select {
+  width: 100%;
+  text-align: center;
+}
+
+.search-form .field[style*="align-self:end"] {
+  align-self: end;
+  justify-self: center;
+}
+
+/* Search Button Styling - Inventory Gradient Style */
+.search-form button[type="submit"] {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #856404;
+  border: 2px solid #e0a800;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  min-width: 140px;
+}
+
+.search-form button[type="submit"]:hover {
+  background: linear-gradient(135deg, #e0a800, #d39e00);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,168,0,0.4);
+}
+
+/* Table Container */
+.table-container { 
+  margin-top: 20px; 
+}
+
+.table-container h3 {
+  max-width: 1200px;
+  margin: 0 0 10px 0;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th, .data-table td {
+  padding: 10px 12px;
+  border: 1px solid #cfd4dc;
+  text-align: left;
+  font-size: 14px;
+}
+
+.data-table thead th {
+  background: #f3f6fa;
+  font-weight: 600;
+}
+
+/* Table Header */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.btn-clear {
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+  color: #333;
+}
+
+.btn-clear:hover { 
+  background: #f3f6fa; 
+}
+
+/* Muted Text */
+.muted { 
+  color: #6b7280; 
+  text-align: center; 
+}
+
+/* Results Wrapper */
+.results-wrap legend { 
+  background: linear-gradient(135deg, #da7422, #b8611c);
+  color: white;
+  padding: 10px 18px;
+  margin: 20px -24px 16px -24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  width: calc(100% + 48px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.results-wrap legend::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #ddd, transparent);
+}
+
+/* Required Field Indicator */
+.patient-form .required::after {
+  content: ' *';
+  color: #dc3545;
+}
+
+/* Form Validation */
+.patient-form .invalid {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.patient-form .valid {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+.validation-message {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #dc3545;
+}
+
+/* Patient Form Button Styling - Inventory Gradient Style */
+.patient-form .actions button {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #856404;
+  border: 2px solid #e0a800;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  min-width: 140px;
+}
+
+.patient-form .actions button[type="reset"] {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: #fff;
+  border: 2px solid #5a6268;
+}
+
+.patient-form .actions button:hover {
+  background: linear-gradient(135deg, #e0a800, #d39e00);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,168,0,0.4);
+}
+
+.patient-form .actions button[type="reset"]:hover {
+  background: linear-gradient(135deg, #5a6268, #495057);
+  color: white;
+  box-shadow: 0 4px 12px rgba(90,98,104,0.4);
+}
+
+/* Section Animations */
+.patient-form legend,
+.search-container legend,
+.table-container legend,
+.results-wrap legend {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .form-row { 
+    grid-template-columns: 1fr 1fr; 
+  }
+}
+
+@media (max-width: 520px) {
+  .form-row { 
+    grid-template-columns: 1fr; 
+  }
+}

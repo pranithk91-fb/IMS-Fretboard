@@ -1,0 +1,47 @@
+/* ================================
+   LEGACY STYLE FILE
+   Use this only if modular CSS fails
+   ================================ */
+
+/* IMPORTANT: This file is kept as a backup.
+   The application now uses modular CSS files in static/css/
+   - main.css: Global styles
+   - components.css: Reusable components  
+   - login.css: Login page specific
+   - patient-form.css: Patient form specific
+   - inventory.css: Inventory page specific
+   
+   Only use this file in emergencies */
+
+/* Redirect notice for developers */
+.legacy-notice {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 12px;
+  margin: 20px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.legacy-notice::before {
+  content: "⚠️ ";
+}
+
+/* Minimal fallback styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}

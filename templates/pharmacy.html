@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pharmacy.css') }}">
+{% endblock %}
+
+{% block title %}Pharmacy - IMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="main-header">
+        <h2 class="page-title">Pharmacy</h2>
+    </header>
+
+    <div class="content">
+        <!-- Patient Details Section -->
+        <div class="patient-section">
+            <legend>Patient Details</legend>
+            
+            <form method="POST" action="{{ url_for('pharmacy.pharmacy') }}" class="pharmacy-form">
+                <div class="form-row">
+                    <div class="field">
+                        <label for="patient_name">Patient Name *</label>
+                        <input type="text" 
+                               id="patient_name" 
+                               name="patient_name" 
+                               list="patients_list" 
+                               placeholder="Select or enter patient name"
+                               required>
+                        <datalist id="patients_list">
+                            {% for patient in today_patients %}
+                            <option value="{{ patient.PName }}" 
+                                    data-phone="{{ patient.Phone }}" 
+                                    data-uhid="{{ patient.UHId }}">
+                                {{ patient.PName }} ({{ patient.UHId }})
+                            </option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    
+                    <div class="field">
+                        <label for="phone_no">Phone Number</label>
+                        <input type="tel" 
+                               id="phone_no" 
+                               name="phone_no" 
+                               placeholder="Enter phone number"
+                               pattern="[0-9]{10}">
+                    </div>
+                    
+                    <div class="field">
+                        <label for="uhid">UHId</label>
+                        <input type="text" 
+                               id="uhid" 
+                               name="uhid" 
+                               placeholder="Patient UHId"
+                               readonly>
+                    </div>
+                </div>
+
+                <!-- Medicines Section -->
+                <legend>Medicines</legend>
+                
+                <div class="medicines-section">
+                    <div class="add-medicine-row">
+                        <div class="field">
+                            <label for="medicine_name">Medicine Name</label>
+                            <select id="medicine_name" name="medicine_name">
+                                <option value="">Select Medicine</option>
+                                {% for medicine in medicines %}
+                                <option value="{{ medicine.MedicineName }}" 
+                                        data-price="{{ medicine.MRP }}"
+                                        data-mid="{{ medicine.MId }}">
+                                    {{ medicine.MedicineName }} - ₹{{ medicine.MRP }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="BatchNo">Batch No</label>
+                            <input type="text" 
+                                   id="dosage" 
+                                   name="dosage" 
+                                   placeholder="e.g., 1-0-1">
+                        </div>
+                        
+                        <div class="field">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" 
+                                   id="quantity" 
+                                   name="quantity" 
+                                   min="1" 
+                                   placeholder="Qty">
+                        </div>
+                        
+                        
+                        
+                        <div class="field">
+                            <label for="duration">Duration</label>
+                            <input type="text" 
+                                   id="duration" 
+                                   name="duration" 
+                                   placeholder="e.g., 7 days">
+                        </div>
+                        
+                        <div class="field">
+                            <button type="button" id="add_medicine_btn" class="btn-add">Add Medicine</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medicines Table -->
+                <div class="medicines-table-section">
+                    <table class="medicines-table" id="medicines_table">
+                        <thead>
+                            <tr>
+                                <th>Medicine</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Dosage</th>
+                                <th>Duration</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medicines_tbody">
+                            <!-- Medicines will be added here -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="5"><strong>Total Amount:</strong></td>
+                                <td id="grand_total"><strong>₹0.00</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Submit Section -->
+                <div class="actions">
+                    <button type="submit" class="btn-submit">Submit Prescription</button>
+                    <button type="reset" class="btn-reset">Clear Form</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-fill patient details when selected from dropdown
+document.getElementById('patient_name').addEventListener('input', function() {
+    const patientName = this.value;
+    const phoneInput = document.getElementById('phone_no');
+    const uhidInput = document.getElementById('uhid');
+    
+    // Find matching patient from datalist
+    const option = [...document.querySelectorAll('#patients_list option')]
+        .find(opt => opt.value === patientName);
+    
+    if (option) {
+        phoneInput.value = option.dataset.phone || '';
+        uhidInput.value = option.dataset.uhid || '';
+    } else {
+        // Clear fields for new patient
+        phoneInput.value = '';
+        uhidInput.value = '';
+    }
+});
+
+// Medicine management
+let medicineCount = 0;
+let grandTotal = 0;
+
+document.getElementById('add_medicine_btn').addEventListener('click', function() {
+    const medicineName = document.getElementById('medicine_name');
+    const quantity = document.getElementById('quantity');
+    const dosage = document.getElementById('dosage');
+    const duration = document.getElementById('duration');
+    
+    if (!medicineName.value || !quantity.value) {
+        alert('Please select medicine and enter quantity');
+        return;
+    }
+    
+    const selectedOption = medicineName.options[medicineName.selectedIndex];
+    const price = parseFloat(selectedOption.dataset.price) || 0;
+    const total = price * parseInt(quantity.value);
+    
+    // Add to table
+    const tbody = document.getElementById('medicines_tbody');
+    const row = tbody.insertRow();
+    medicineCount++;
+    
+    row.innerHTML = `
+        <td>${medicineName.value}</td>
+        <td>${quantity.value}</td>
+        <td>₹${price.toFixed(2)}</td>
+        <td>${dosage.value}</td>
+        <td>${duration.value}</td>
+        <td>₹${total.toFixed(2)}</td>
+        <td><button type="button" class="btn-remove" onclick="removeMedicine(this, ${total})">Remove</button></td>
+        <input type="hidden" name="medicine_${medicineCount}" value="${medicineName.value}">
+        <input type="hidden" name="quantity_${medicineCount}" value="${quantity.value}">
+        <input type="hidden" name="price_${medicineCount}" value="${price}">
+        <input type="hidden" name="dosage_${medicineCount}" value="${dosage.value}">
+        <input type="hidden" name="duration_${medicineCount}" value="${duration.value}">
+        <input type="hidden" name="total_${medicineCount}" value="${total}">
+    `;
+    
+    // Update grand total
+    grandTotal += total;
+    document.getElementById('grand_total').innerHTML = `<strong>₹${grandTotal.toFixed(2)}</strong>`;
+    
+    // Clear inputs
+    medicineName.selectedIndex = 0;
+    quantity.value = '';
+    dosage.value = '';
+    duration.value = '';
+});
+
+function removeMedicine(button, amount) {
+    button.closest('tr').remove();
+    grandTotal -= amount;
+    document.getElementById('grand_total').innerHTML = `<strong>₹${grandTotal.toFixed(2)}</strong>`;
+}
+</script>
+
+{% endblock %}

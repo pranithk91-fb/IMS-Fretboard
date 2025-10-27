@@ -1,0 +1,140 @@
+/* ================================
+   LOGIN PAGE SPECIFIC STYLES
+   ================================ */
+
+/* Login background with gradient */
+.fb-bg {
+  background: linear-gradient(135deg, #F6E4F6, #E8D0E8);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+}
+
+/* Main login container */
+.fb-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  padding: 30px 40px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Header section with logo */
+.fb-header {
+  margin-bottom: 25px;
+}
+
+.fb-logo-image {
+  width: 120px;
+  height: auto;
+  margin-bottom: 15px;
+}
+
+.fb-info {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Login form */
+.fb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.fb-form input[type="text"],
+.fb-form input[type="password"] {
+  padding: 14px 16px;
+  border: 1px solid #dddfe2;
+  border-radius: 6px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.fb-form input[type="text"]:focus,
+.fb-form input[type="password"]:focus {
+  border-color: #1877f2;
+}
+
+.fb-form button {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #856404;
+  border: 2px solid #e0a800;
+  padding: 12px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin-top: 10px;
+  width: 100%;
+}
+
+.fb-form button:hover {
+  background: linear-gradient(135deg, #e0a800, #d39e00);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,168,0,0.4);
+}
+
+/* Forgot password link */
+.fb-forgot {
+  color: #1877f2;
+  text-decoration: none;
+  font-size: 14px;
+  margin-top: 15px;
+  display: inline-block;
+}
+
+.fb-forgot:hover {
+  text-decoration: underline;
+}
+
+/* Error message */
+.fb-error {
+  background: #f02849;
+  color: white;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 15px;
+  margin-bottom: 0;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .fb-container {
+    margin: 20px;
+    padding: 25px 20px;
+    max-width: calc(100% - 40px);
+  }
+  
+  .fb-logo-image {
+    width: 100px;
+  }
+  
+  .fb-info {
+    font-size: 16px;
+  }
+  
+  .fb-form input[type="text"],
+  .fb-form input[type="password"] {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+  
+  .fb-form button {
+    font-size: 16px;
+    padding: 10px;
+  }
+}

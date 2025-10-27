@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+{% endblock %}
+
+{% block title %}Reports - IMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="main-header">
+        <h2 class="page-title">Stock Reports</h2>
+    </header>
+
+    <div class="content">
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <legend>Filter Reports</legend>
+            
+            <form method="GET" action="{{ url_for('reports.reports') }}" class="filters-form">
+                <div class="filter-row">
+                    <div class="filter-field">
+                        <label for="medicine_filter">Medicine Name</label>
+                        <select id="medicine_filter" name="medicine_filter">
+                            <option value="">All Medicines</option>
+                            {% for medicine in medicine_list %}
+                                <option value="{{ medicine }}" {% if medicine == selected_medicine %}selected{% endif %}>
+                                    {{ medicine }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-field">
+                        <label for="type_filter">Medicine Type</label>
+                        <select id="type_filter" name="type_filter">
+                            <option value="">All Types</option>
+                            {% for mtype in type_list %}
+                                <option value="{{ mtype }}" {% if mtype == selected_type %}selected{% endif %}>
+                                    {{ mtype }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-field">
+                        <label for="company_filter">Company</label>
+                        <select id="company_filter" name="company_filter">
+                            <option value="">All Companies</option>
+                            {% for company in company_list %}
+                                <option value="{{ company }}" {% if company == selected_company %}selected{% endif %}>
+                                    {{ company }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-field">
+                        <button type="submit" class="btn-filter">Apply Filters</button>
+                        <button type="button" onclick="clearFilters()" class="btn-clear">Clear All</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-section">
+            <div class="summary-card">
+                <div class="summary-title">Total Medicines</div>
+                <div class="summary-value">{{ total_medicines }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">Low Stock Items</div>
+                <div class="summary-value low-stock">{{ low_stock_count }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">Near Expiry</div>
+                <div class="summary-value near-expiry">{{ near_expiry_count }}</div>
+            </div>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h3>Current Stock Report</h3>
+                <div class="table-actions">
+                    <button onclick="exportToCSV()" class="btn-export">Export CSV</button>
+                    <button onclick="printReport()" class="btn-print">Print Report</button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="reports-table" id="reportsTable">
+                    <thead>
+                        <tr>
+                            <th>Medicine Name</th>
+                            <th>Current Stock</th>
+                            <th>Medicine Type</th>
+                            <th>Last Delivery Date</th>
+                            <th>Closest to Expiry</th>
+                            <th>Company</th>
+                            <th>Stock Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in stock_data %}
+                        <tr class="{{ 'low-stock-row' if row.CurrentStock|int < 10 else '' }} {{ 'near-expiry-row' if row.DaysToExpiry and row.DaysToExpiry|int < 30 else '' }}">
+                            <td class="medicine-name">{{ row.MName }}</td>
+                            <td class="stock-qty">{{ row.CurrentStock or 0 }}</td>
+                            <td class="medicine-type">{{ row.MType or 'N/A' }}</td>
+                            <td class="delivery-date">{{ row.LastDeliveryDate or 'No delivery' }}</td>
+                            <td class="expiry-date">
+                                {% if row.ClosestToExpiry %}
+                                    {{ row.ClosestToExpiry }}
+                                    {% if row.DaysToExpiry %}
+                                        <span class="days-remaining">({{ row.DaysToExpiry }} days)</span>
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="company">{{ row.MCompany or 'N/A' }}</td>
+                            <td class="stock-status">
+                                {% if row.CurrentStock|int == 0 %}
+                                    <span class="status-badge out-of-stock">Out of Stock</span>
+                                {% elif row.CurrentStock|int < 10 %}
+                                    <span class="status-badge low-stock">Low Stock</span>
+                                {% elif row.DaysToExpiry and row.DaysToExpiry|int < 30 %}
+                                    <span class="status-badge near-expiry">Near Expiry</span>
+                                {% else %}
+                                    <span class="status-badge in-stock">In Stock</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="no-data">No data found matching the current filters</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function clearFilters() {
+    window.location.href = "{{ url_for('reports.reports') }}";
+}
+
+function exportToCSV() {
+    const table = document.getElementById('reportsTable');
+    const rows = Array.from(table.querySelectorAll('tr'));
+    
+    const csvContent = rows.map(row => {
+        const cells = Array.from(row.querySelectorAll('th, td'));
+        return cells.map(cell => {
+            let content = cell.textContent.trim();
+            content = content.replace(/\s+/g, ' ');
+            if (content.includes(',') || content.includes('"')) {
+                content = '"' + content.replace(/"/g, '""') + '"';
+            }
+            return content;
+        }).join(',');
+    }).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'stock_report_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function printReport() {
+    const printContent = document.querySelector('.table-section').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = '<html><head><title>Stock Report - ' + new Date().toLocaleDateString() + '</title><style>body { font-family: Arial, sans-serif; margin: 20px; }table { width: 100%; border-collapse: collapse; margin-top: 20px; }th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }th { background-color: #f5f5f5; font-weight: bold; }.status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }.low-stock { background: #fff3cd; color: #856404; }.near-expiry { background: #f8d7da; color: #721c24; }.in-stock { background: #d4edda; color: #155724; }.out-of-stock { background: #f8d7da; color: #721c24; }@media print { .table-actions { display: none; } }</style></head><body><h1>Stock Report - ' + new Date().toLocaleDateString() + '</h1>' + printContent + '</body></html>';
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+</script>
+
+{% endblock %}

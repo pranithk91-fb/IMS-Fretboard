@@ -1,0 +1,609 @@
+:root {
+  --bg: #d6e2d6d7;
+  --card: #ffffff;
+  --text: #38bb45;
+  --muted: #666;
+  --primary: #007bff;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.container {
+  max-width: 1200px;       /* whitespace left & right */
+  width: 100%;
+  margin: 48px auto;       /* centers in the page */
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 24px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  
+}
+
+h2 {
+  text-align: center;
+  margin: 0 0 25px 0;
+}
+
+.message {
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 8px 0 16px;
+  font-size: 14px;
+}
+.message.success { background: #e9f9ef; color: #147a2e; }
+.message.error   { background: #fdecec; color: #9d1c1c; }
+
+.patient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 items per row */
+  gap: 16px;
+  
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-wide {
+  grid-column: span 2; /* Adjust this number if you want it to take more/less space */
+}
+
+.main {
+    flex-grow: 1;
+    padding: 30px;
+}
+
+label {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+input, select {
+  padding: 10px 12px;
+  border: 1px solid #cfd4dc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+button {
+  min-width: 140px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+button[type="reset"] {
+  background: #6c757d;
+}
+button:hover { opacity: 0.95; }
+
+.table-container { margin-top: 20px; }
+
+.table-container h3 {
+  max-width: 1200px;
+  margin: 0 0 10px 0;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th, .data-table td {
+  padding: 10px 12px;
+  border: 1px solid #cfd4dc;
+  text-align: left;
+  font-size: 14px;
+}
+
+.data-table thead th {
+  background: #f3f6fa;
+  font-weight: 600;
+}
+
+.muted { color: #6b7280; text-align: center; }
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.btn-clear {
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+  color: #333;
+}
+.btn-clear:hover { background: #f3f6fa; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .form-row { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+
+
+.search-container { margin-top: 20px; }
+
+.search-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
+  gap: 16px;
+  align-items: end;
+}
+
+.items-form .form-row {
+  display: grid;
+  grid-template-columns: 250px minmax(0,0.5fr) 250 minmax(0,1fr) minmax(0,0.5fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.items-form .form-row input,
+.items-form .form-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+
+
+.items-form .form-row .field:first-child {
+  max-width: 1000px; 
+}
+
+
+/* Layout with sidebar */
+.layout {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden;
+}
+/* Left sidebar */
+.sidebar {
+  width: 220px;
+  background: #e5e7eb;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100vh;       /* full-height bar */
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+
+  /* Center the button stack vertically */
+  justify-content: center;
+}
+
+.main-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+
+
+/* Header at the top inside main area */
+.main-header {
+  height: 50px;
+  background: #e5e7eb; /* Facebook blue */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  color: #D7A028;
+  font-weight: bold;
+  gap: 20px;
+}
+
+/* Date/time */
+#date-time {
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+/* Logout button */
+.logout-btn {
+  color: white;
+  border: 1px solid white;
+  border-radius: 6px;
+  padding: 6px 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: white;
+  color: #1877f2;
+}
+
+/* Sidebar buttons */
+.nav-btn {
+  display: flex;
+  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #147a2e;
+  color: #e5e7eb;
+  font-weight: 600;
+  text-align: left;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-btn:hover { background: #147a2e; }
+.nav-btn.active { background: #2563eb; color: #fff; }
+
+/* Main content column */
+.content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Optional: table header + clear button (if not present yet) */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.btn-clear {
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+  color: #333;
+}
+.btn-clear:hover { background: #f3f6fa; }
+
+@media (max-width: 700px) {
+  .sidebar { justify-content: flex-start; }
+}
+
+* Header bar for logout and date/time */
+.sticky-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #1877f2; /* Facebook blue */
+  height: 50px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Container inside header for content alignment */
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: white;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Logout button styling */
+a.logout-btn {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  border: 1px solid white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+
+
+a.logout-btn:hover {
+  background-color: white;
+  color: #147a2e;
+}
+
+/* Date and time text */
+#date-time {
+  color: #147a2e;
+  font-weight: bold;
+  align-items: center;
+  margin-right: 20px;
+  padding: 4px 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+}
+
+/* Logout button styling */
+
+.item-details {
+  margin-top: 16px;
+  color: #147a2e;
+  font-weight: bold;
+  text-align: center;
+}
+.item-details-row {
+  margin-top: 16px;
+  margin-bottom: 2px;
+  font-weight: bold;
+  text-align: center;
+}
+
+
+#items-table td, #items-table th {
+  height: 65px; /* or match your input/select height */
+  vertical-align: middle;
+}
+/* Make Item Name column wide and Action column narrow */
+#items-table th:nth-child(1),
+#items-table td:nth-child(1) {
+  min-width: 120px;
+  width: 200px;
+}
+
+#items-table th:nth-child(2),
+#items-table td:nth-child(2) {
+  min-width: 120px;
+  width: 200px;
+}
+
+/* Action column: center content vertically and horizontally, prevent stretching */
+#items-table td:nth-child(6) {
+  width: 50px;
+  text-align: center;
+  padding: 0;
+  vertical-align: middle;
+  /* Use flex to center the button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  
+}
+
+#items-table th:nth-child(6) {
+  width: 50px;
+  text-align: center;
+  padding: 0;
+}
+
+/* Remove button: perfect 15x15 square, centered */
+.remove-item-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  width: 15px;
+  
+  min-width: 0;
+  min-height: 0;
+  line-height: 15px;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 3px;
+  transition: background 0.2s;
+  display: inline-block; /* or block, but inline-block is best with flex */
+}
+.remove-item-btn:hover {
+  background: #c0392b;
+}
+
+/* Section Separation Styles */
+
+/* Bill Details Section */
+.stock-deliveries-form legend:first-of-type {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: white;
+  padding: 12px 20px;
+  margin: -16px -24px 20px -24px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  width: calc(100% + 48px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Items Entry Section */
+.stock-deliveries-form legend:nth-of-type(2) {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  padding: 10px 18px;
+  margin: 30px -24px 16px -24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  width: calc(100% + 48px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+/* Add separator line above Items section */
+.stock-deliveries-form legend:nth-of-type(2)::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #ddd, transparent);
+}
+
+/* Items Entry Form Styling */
+.stock-deliveries-form > .form-row:has(+ .actions button[onclick*="addItem"]) {
+  background: #f8fff9;
+  border: 2px solid #e8f5e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+/* Alternative selector for better browser support */
+.stock-deliveries-form > .form-row:nth-last-of-type(2) {
+  background: #f8fff9;
+  border: 2px solid #e8f5e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Item Details Display */
+.item-details {
+  background: #f0f8ff;
+  border: 1px solid #d1ecf1;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 16px 0 20px 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.item-details:empty {
+  display: none;
+}
+
+/* Items Table Section */
+.table-container {
+  background: #fafafa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px -8px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.table-container::before {
+  content: "Added Items";
+  display: block;
+  font-weight: bold;
+  color: #6c757d;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+}
+
+/* Enhanced table styling */
+.data-table {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.data-table thead {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+.data-table thead th {
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* Save Purchase Button Section */
+.stock-deliveries-form > .actions:last-child {
+  margin: 30px 0 0 0;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.stock-deliveries-form > .actions:last-child input[type="submit"] {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #856404;
+  border: 2px solid #e0a800;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.stock-deliveries-form > .actions:last-child input[type="submit"]:hover {
+  background: linear-gradient(135deg, #e0a800, #d39e00);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,168,0,0.4);
+}
+
+/* Section spacing */
+.stock-deliveries-form > .form-row + .form-row {
+  margin-top: 0;
+}
+
+.stock-deliveries-form > legend + .form-row {
+  margin-top: 0;
+}
+
+/* Add subtle animations */
+.stock-deliveries-form legend {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

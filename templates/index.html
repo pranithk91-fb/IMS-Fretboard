@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <button>OP Register</button>
+        <button>Pharmacy</button>
+        <button>View Sales</button>
+        <button>Returns</button>
+        <button>Price Update</button>
+        <button>Account</button>
+    </div>
+
+    <div class="main">
+        <h2>Patient Registration</h2>
+        <form method="POST">
+            <div class="form-row">
+                <input name="uid" placeholder="Patient UID" required>
+                <input name="name" placeholder="Patient Name" required>
+                <input name="phone" placeholder="Phone No:" required>
+                <select name="gender" required>
+                    <option value="">Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <input name="age" placeholder="Age" required>
+                <select name="op_proc" required>
+                    <option value="">OP/Proc</option>
+                    <option>OP</option>
+                    <option>Procedure</option>
+                </select>
+                <select name="payment" required>
+                    <option value="">Payment Mode</option>
+                    <option>Cash</option>
+                    <option>UPI</option>
+                    <option>Card</option>
+                </select>
+                <input name="amount" placeholder="Amount" required>
+                <input name="procedure" placeholder="Procedure">
+            </div>
+            <div class="form-row">
+                <button type="submit">Register</button>
+                <button type="reset">Clear Entries</button>
+            </div>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>UID</th>
+                    <th>Time Stamp</th>
+                    <th>Patient Name</th>
+                    <th>Phone No.</th>
+                    <th>Gender</th>
+                    <th>Age</th>
+                    <th>OP/Proc</th>
+                    <th>Payment Mode</th>
+                    <th>Amount</th>
+                    <th>Proc Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td>{{ p.uid }}</td>
+                    <td>{{ p.timestamp }}</td>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.phone }}</td>
+                    <td>{{ p.gender }}</td>
+                    <td>{{ p.age }}</td>
+                    <td>{{ p.op_proc }}</td>
+                    <td>{{ p.payment }}</td>
+                    <td>{{ p.amount }}</td>
+                    <td>{{ p.procedure }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p class="op-count">Total OP Count: {{ patients|length }}</p>
+    </div>
+</body>
+</html>

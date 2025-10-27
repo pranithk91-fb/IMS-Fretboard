@@ -1,0 +1,622 @@
+/* Modern Inventory Page Styles */
+
+.inventory-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Alert Messages */
+.alert {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #f0fff4;
+    color: #22543d;
+    border: 1px solid #9ae6b4;
+}
+
+.alert-error {
+    background: #fed7d7;
+    color: #9b2c2c;
+    border: 1px solid #feb2b2;
+}
+
+/* Main Layout */
+.main-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+/* Panel Cards */
+.panel-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.panel-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-add-medicine-header,
+.btn-update-price-header {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add-medicine-header:hover,
+.btn-update-price-header:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Left Panel - Bill Details */
+.left-panel {
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.completion-indicator {
+    text-align: right;
+}
+
+.completion-text {
+    font-size: 12px;
+    opacity: 0.9;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.completion-bar {
+    width: 100px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.completion-fill {
+    height: 100%;
+    background: #48bb78;
+    transition: width 0.3s ease;
+}
+
+.bill-form {
+    padding: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group label.required::after {
+    content: ' *';
+    color: #e53e3e;
+}
+
+.auto-calc-note {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: normal;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: white;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.bill-total-input {
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef) !important;
+    border: 2px solid #28a745 !important;
+    font-weight: bold !important;
+    color: #155724 !important;
+    font-size: 15px !important;
+    text-align: center !important;
+    cursor: not-allowed !important;
+}
+
+/* Right Panel - Items */
+.item-entry-section {
+    padding: 25px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.search-row {
+    margin-bottom: 20px;
+}
+
+.smart-search select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+}
+
+/* Medicine Info Display */
+.medicine-info {
+    background: #f0fff4;
+    border: 1px solid #9ae6b4;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-row {
+    font-size: 13px;
+    color: #22543d;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Item Details Form */
+.item-details-form {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.btn-add-item {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.btn-add-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+/* Items Table */
+.items-table-section {
+    padding: 0;
+}
+
+.table-header {
+    padding: 20px 25px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    color: #374151;
+}
+
+.table-container {
+    min-height: 300px;
+    position: relative;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.items-table th {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.items-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.items-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.price-diff {
+    font-weight: 600;
+}
+
+.price-diff.positive {
+    color: #e53e3e;
+}
+
+.price-diff.negative {
+    color: #22543d;
+}
+
+.btn-remove {
+    background: #e53e3e;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove:hover {
+    background: #c53030;
+}
+
+/* Empty State */
+.empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #718096;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.empty-state small {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Bottom Actions */
+.bottom-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 0;
+    border-top: 2px solid #e2e8f0;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 2px solid #e2e8f0;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 16px;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 25px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 20px 25px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Price Comparison in Modal */
+.price-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.current-prices,
+.new-prices {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.current-prices h4,
+.new-prices h4 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.current-prices input[readonly] {
+    background: #e9ecef !important;
+    color: #6c757d !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* Select2 Compatibility */
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 48px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding-left: 16px !important;
+    line-height: 44px !important;
+    font-size: 14px !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-layout {
+        grid-template-columns: 350px 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 968px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .left-panel {
+        position: static;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .quick-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+@media (max-width: 640px) {
+    .inventory-container {
+        padding: 15px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .price-comparison {
+        grid-template-columns: 1fr;
+    }
+    
+    .bottom-actions {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+    
+    .header-actions {
+        display: none;
+    }
+}

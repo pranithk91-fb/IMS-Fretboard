@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">
+{% endblock %}
+
+{% block title %}Payments - IMS{% endblock %}
+{% block content %}
+
+<div class="container">
+    <h2 class="page-title">Bill Payments Management</h2>
+    
+    {% if error %}
+        <div class="error-message">{{ error }}</div>
+    {% endif %}
+    
+    <!-- Filters Section -->
+    <div class="filters-container">
+        <form method="GET" class="filters-form">
+            <div class="filter-row">
+                <div class="filter-field">
+                    <label for="date_from">From Date</label>
+                    <input type="date" id="date_from" name="date_from" value="{{ current_filters.date_from }}">
+                </div>
+                
+                <div class="filter-field">
+                    <label for="date_to">To Date</label>
+                    <input type="date" id="date_to" name="date_to" value="{{ current_filters.date_to }}">
+                </div>
+                
+                <div class="filter-field">
+                    <label for="agency">Agency</label>
+                    <select id="agency" name="agency">
+                        <option value="">All Agencies</option>
+                        {% for agency in agencies %}
+                            <option value="{{ agency }}" {% if current_filters.agency == agency %}selected{% endif %}>
+                                {{ agency }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-field">
+                    <label for="payment_status">Payment Status</label>
+                    <select id="payment_status" name="payment_status">
+                        <option value="unpaid" {% if current_filters.payment_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                        <option value="paid" {% if current_filters.payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="all" {% if current_filters.payment_status == 'all' %}selected{% endif %}>All Status</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter">Apply Filters</button>
+                    <a href="{{ url_for('payments.payments') }}" class="btn-clear">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Summary Section -->
+    <div class="summary-container">
+        <div class="summary-card">
+            <span class="summary-label">Total Bills:</span>
+            <span class="summary-value">{{ total_bills }}</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Unpaid Amount:</span>
+            <span class="summary-value unpaid">₹{{ "%.2f"|format(unpaid_amount) }}</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Paid Amount:</span>
+            <span class="summary-value paid">₹{{ "%.2f"|format(paid_amount) }}</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Total Amount:</span>
+            <span class="summary-value">₹{{ "%.2f"|format(total_amount) }}</span>
+        </div>
+    </div>
+    
+    <!-- Bills Table -->
+    <div class="table-container">
+        {% if bills %}
+            <form id="bulkPaymentForm">
+                <table class="payments-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                <label for="selectAll">All</label>
+                            </th>
+                            <th>Bill No</th>
+                            <th>Date</th>
+                            <th>Agency</th>
+                            <th>Bill Amount</th>
+                            <th>Tax</th>
+                            <th>Discount</th>
+                            <th>Total</th>
+                            <th>Payment Date</th>
+                            <th>Payment Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in bills %}
+                        <tr class="bill-row" data-bill-id="{{ bill.BillId }}" data-bill-total="{{ bill.BillTotal }}">
+                            <td class="checkbox-cell">
+                                <input type="checkbox" 
+                                       name="selected_bills" 
+                                       value="{{ bill.BillId }}" 
+                                       class="bill-checkbox"
+                                       onchange="updateSelectedTotal()">
+                            </td>
+                            <td>{{ bill.BillNo }}</td>
+                            <td>{{ bill.BillDate }}</td>
+                            <td>{{ bill.MAgency }}</td>
+                            <td class="amount">₹{{ "%.2f"|format(bill.BillAmount) }}</td>
+                            <td class="amount">₹{{ "%.2f"|format(bill.TaxAmount) }}</td>
+                            <td class="amount">
+                                {% if bill.DiscountInBill %}
+                                    ₹{{ "%.2f"|format(bill.DiscountAmount) }}
+                                    {% if bill.DiscountPercent > 0 %}
+                                        ({{ "%.1f"|format(bill.DiscountPercent) }}%)
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="amount total">₹{{ "%.2f"|format(bill.BillTotal) }}</td>
+                            <td>{{ bill.PaymentDate or '-' }}</td>
+                            <td>{{ bill.PaymentMode or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Selected Bills Summary and Payment Details -->
+                <div class="payment-section">
+                    <div class="selected-summary">
+                        <div class="summary-row">
+                            <span class="summary-label">Selected Bills:</span>
+                            <span id="selectedCount" class="summary-value">0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Original Total:</span>
+                            <span id="originalTotal" class="summary-value">₹0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Discount Applied:</span>
+                            <span id="discountAmount" class="summary-value">₹0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Final Total:</span>
+                            <span id="selectedTotal" class="summary-value">₹0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-inputs">
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="paymentDate">Payment Date</label>
+                                <input type="date" id="paymentDate" name="payment_date" required>
+                            </div>
+                            <div class="input-field">
+                                <label for="paymentMode">Payment Mode</label>
+                                <select id="paymentMode" name="payment_mode" required>
+                                    <option value="">Select Payment Mode</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="NEFT">NEFT</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="other">IMPS</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="paymentDiscount">Additional Discount (%)</label>
+                                <input type="number" step="0.01" id="paymentDiscount" name="payment_discount" min="0" max="100" value="4" onchange="updateSelectedTotal()">
+                            </div>
+                            <div class="input-field">
+                                <label for="amountPaid">Amount Paid</label>
+                                <input type="number" step="0.01" id="amountPaid" name="amount_paid" min="0" placeholder="Enter amount paid">
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label for="transactionDetails">Transaction Details</label>
+                                <input type="text" id="transactionDetails" name="transaction_details" placeholder="Reference number, notes, etc.">
+                            </div>
+                            <div class="input-field">
+                                <!-- Empty field for layout balance -->
+                            </div>
+                        </div>
+                        
+                        <div class="payment-actions">
+                            <button type="button" class="btn-auto-fill" onclick="autoFillAmount()">Auto-fill Amount</button>
+                            <button type="submit" class="btn-process-payment" id="processPaymentBtn" disabled>Process Payment</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <div class="no-data">
+                <p>No bills found matching the selected criteria.</p>
+                <p>Try adjusting your filters or check if there are any bills in the system.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Checkbox functionality for bulk payment processing
+let selectedBills = [];
+let selectedBillsData = [];
+let originalTotal = 0;
+let selectedTotal = 0;
+let discountAmount = 0;
+
+// Toggle all checkboxes
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const billCheckboxes = document.querySelectorAll('.bill-checkbox');
+    
+    billCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateSelectedTotal();
+}
+
+// Update selected total and count with discount calculation
+function updateSelectedTotal() {
+    selectedBills = [];
+    selectedBillsData = [];
+    originalTotal = 0;
+    
+    const checkedBoxes = document.querySelectorAll('.bill-checkbox:checked');
+    const paymentDiscountPercent = parseFloat(document.getElementById('paymentDiscount').value) || 0;
+    
+    checkedBoxes.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        const billId = checkbox.value;
+        const billTotal = parseFloat(row.dataset.billTotal) || 0;
+        
+        // Get bill data from the row (we need to check if bill already has discount)
+        const billCells = row.querySelectorAll('td');
+        const discountCell = billCells[6]; // Discount column (index 6: checkbox, billno, date, agency, amount, tax, discount)
+        const hasExistingDiscount = discountCell && discountCell.textContent.trim() !== '-';
+        
+        selectedBills.push(billId);
+        selectedBillsData.push({
+            billId: billId,
+            originalAmount: billTotal,
+            hasExistingDiscount: hasExistingDiscount
+        });
+        originalTotal += billTotal;
+    });
+    
+    // Calculate discount amount
+    let totalDiscountAmount = 0;
+    let finalTotal = 0;
+    
+    selectedBillsData.forEach(bill => {
+        if (!bill.hasExistingDiscount && paymentDiscountPercent > 0) {
+            // Apply additional discount only if bill doesn't already have discount
+            const billDiscountAmount = (bill.originalAmount * paymentDiscountPercent) / 100;
+            totalDiscountAmount += billDiscountAmount;
+            finalTotal += (bill.originalAmount - billDiscountAmount);
+        } else {
+            // No additional discount applied
+            finalTotal += bill.originalAmount;
+        }
+    });
+    
+    discountAmount = totalDiscountAmount;
+    selectedTotal = finalTotal;
+    
+    // Update display
+    document.getElementById('selectedCount').textContent = selectedBills.length;
+    document.getElementById('originalTotal').textContent = `₹${originalTotal.toFixed(2)}`;
+    document.getElementById('discountAmount').textContent = `₹${discountAmount.toFixed(2)}`;
+    document.getElementById('selectedTotal').textContent = `₹${selectedTotal.toFixed(2)}`;
+    
+    // Enable/disable process button
+    const processBtn = document.getElementById('processPaymentBtn');
+    processBtn.disabled = selectedBills.length === 0;
+    
+    // Update select all checkbox state
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const totalCheckboxes = document.querySelectorAll('.bill-checkbox').length;
+    const checkedCheckboxes = document.querySelectorAll('.bill-checkbox:checked').length;
+    
+    selectAllCheckbox.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+    selectAllCheckbox.checked = checkedCheckboxes === totalCheckboxes && totalCheckboxes > 0;
+}
+
+// Auto-fill amount with final discounted total
+function autoFillAmount() {
+    if (selectedTotal > 0) {
+        document.getElementById('amountPaid').value = selectedTotal.toFixed(2);
+    }
+}
+
+// Handle bulk payment form submission
+document.getElementById('bulkPaymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (selectedBills.length === 0) {
+        alert('Please select at least one bill to process payment.');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    const paymentDate = formData.get('payment_date');
+    const paymentMode = formData.get('payment_mode');
+    const amountPaid = formData.get('amount_paid');
+    const transactionDetails = formData.get('transaction_details');
+    const paymentDiscount = formData.get('payment_discount');
+    
+    if (!paymentDate || !paymentMode) {
+        alert('Please fill in all required fields (Payment Date and Payment Mode).');
+        return;
+    }
+    
+    const data = {
+        bill_ids: selectedBills,
+        bills_data: selectedBillsData,
+        payment_date: paymentDate,
+        payment_mode: paymentMode,
+        amount_paid: parseFloat(amountPaid) || 0,
+        transaction_details: transactionDetails || '',
+        payment_discount: parseFloat(paymentDiscount) || 0,
+        original_total: originalTotal,
+        discount_amount: discountAmount,
+        selected_total: selectedTotal
+    };
+    
+    // Show confirmation
+    const confirmMessage = `Process payment for ${selectedBills.length} bills?\n` +
+                          `Original Total: ₹${originalTotal.toFixed(2)}\n` +
+                          `Discount Applied: ₹${discountAmount.toFixed(2)} (${paymentDiscount}%)\n` +
+                          `Final Total: ₹${selectedTotal.toFixed(2)}\n` +
+                          `Amount Paid: ₹${(parseFloat(amountPaid) || 0).toFixed(2)}\n` +
+                          `Payment Mode: ${paymentMode}`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Disable button during processing
+    const processBtn = document.getElementById('processPaymentBtn');
+    const originalText = processBtn.textContent;
+    processBtn.disabled = true;
+    processBtn.textContent = 'Processing...';
+    
+    fetch('/api/bulk-payment-update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(`Payment processed successfully for ${result.updated_count} bills!`);
+            location.reload(); // Refresh to show updated status
+        } else {
+            alert('Error: ' + (result.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing payment. Please try again.');
+    })
+    .finally(() => {
+        processBtn.disabled = false;
+        processBtn.textContent = originalText;
+    });
+});
+
+// Set default payment date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('paymentDate').value = today;
+    
+    // Initialize selected total
+    updateSelectedTotal();
+});
+</script>
+
+{% endblock %}

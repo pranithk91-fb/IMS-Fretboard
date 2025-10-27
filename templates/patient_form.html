@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/patient-form.css') }}">
+{% endblock %}
+
+{% block title %}Patient Form - IMS{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <h2 class="page-title">Patient Registration</h2>
+        
+        
+        {% if message %}
+            <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('patient.add_patient') }}" class="patient-form">
+            <!-- Row 1 -->
+            <legend>Patient Details</legend>
+            <div class="form-row">
+                <div class="field">
+                    <label for="UHId">UHId</label>
+                    <input type="text" id="UHId" name="UHId" readonly>
+                </div>
+                <div class="field">
+                    <label for = "Date">Date</label>
+                    <input type="datetime-local" id="Date" name="Date" required>
+                </div>
+
+                <div class="field">
+                    <label for = PName>Patient Name</label>
+                    <input type="text" id="PName" name="PName" required>
+                </div>
+
+                <div class="field">
+                    <label for = "PhoneNo">Phone No</label>
+                    <input type="tel" id="PhoneNo" name="PhoneNo" required>
+                </div>
+
+                <div class="field">
+                    <label for="OPProc">OP/Proc</label>
+                <select id="OPProc" name="OPProc" required>
+                    <option value="">--Select--</option>
+                    <option value="OP">OP</option>
+                    <option value="Procedure">Procedure</option>
+                </select>
+                </div>
+            </div>
+            
+            <!-- Row 2 -->
+            <div class="form-row">
+                <div class="field">
+                    <label for="Age">Age</label>
+                    <input type="number" id="Age" name="Age" min="0" required>
+                </div>
+
+                <div class="field">
+                    <label for = "Gender">Gender</label>
+                    <select id="Gender" name="Gender" required>
+                        <option value="">--Select--</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+            
+                <div class="field">
+                    <label for = "PaymentMode">Payment Mode</label>
+                    <select id="PaymentMode" name="PaymentMode">
+                        <option value="">--Select--</option>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Card">Card</option>
+                    </select>
+                </div>
+            
+                <div class="field">
+                    <label>Amount Paid</label>
+                    <input type="number" name="AmountPaid" min="0">
+                </div>
+            
+                <div class="field"id="procedure-name-field">
+                    <label for="ProcedureName">Procedure Name</label>
+                    <input type="text" id="ProcedureName" name="ProcedureName">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Submit</button>
+                <button type="reset">Clear Entries</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Search Frame -->
+<div class="container search-container">
+  <legend>Search Patients</legend>
+
+    <form method="GET" action="{{ url_for('patient.search') }}" class="search-form">
+        <div class="form-row">
+            <div class="field">
+                <label for="searchField">Field</label>
+                <select id="searchField" name="field" required>
+                <option value="">--Select--</option>
+                <option value="name"   {{ 'selected' if search_field=='name'   else '' }}>Name</option>
+                <option value="phoneno"{{ 'selected' if search_field=='phoneno'else '' }}>Phone No</option>
+                <option value="uhid"   {{ 'selected' if search_field=='uhid'   else '' }}>UHId</option>
+                <option value="date"   {{ 'selected' if search_field=='date'   else '' }}>Date</option>
+                </select>
+            </div>
+
+            <!-- Text inputs (shown for name/phoneno/uhid) -->
+            <div class="field" id="searchTextWrap">
+                <label for="searchTerm">Value</label>
+                <input type="text" id="searchTerm" name="term" value="{{ search_term or '' }}" placeholder="Type here…" />
+            </div>
+
+            <!-- Date input (shown for date) -->
+            <div class="field" id="searchDateWrap" style="display:none;">
+                <label for="searchDate">Date</label>
+                <input type="date" id="searchDate" name="date" value="{{ search_term if search_field=='date' else '' }}">
+            </div>
+
+            <div class="field" style="align-self:end;">
+                <button type="submit">Search</button>
+            </div>
+        </div>
+    </form>
+
+  {% if search_rows is defined %}
+  <div class="results-wrap">
+    <legend>Search Results ({{ search_rows|length }})</legend>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>UHId</th><th>Name</th><th>Phone</th><th>Age</th><th>Gender</th>
+          <th>Visit Type</th><th>Date/Time</th><th>Payment Mode</th><th>Amount</th><th>Procedure Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in search_rows %}
+        <tr>
+          <td>{{ r.UHId }}</td>
+          <td>{{ r.PName }}</td>
+          <td>{{ r.PhoneNo }}</td>
+          <td>{{ r.Age }}</td>
+          <td>{{ r.Gender }}</td>
+          <td>{{ r.VisitType }}</td>
+          <td>{{ r.Date }}</td>
+          <td>{{ r.PaymentMode }}</td>
+          <td>{{ r.AmountPaid }}</td>
+          <td>{{ r.ProcedureName }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="muted">No matches.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+    <div class="container table-container">
+        <legend>{{ table_title }}</legend>
+        <div class="table-header">
+            {% if search_active %}
+                <a class="btn-clear" href="{{ url_for('patient.patient_form') }}">Clear search</a>
+            {% endif %}
+        </div>
+
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>UHId</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Visit Type</th>
+                <th>Date/Time</th>
+                <th>Payment Mode</th>
+                <th>Amount</th>
+                <th>Procedure Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for r in rows %}
+            <tr>
+                <td>{{ r.UHId }}</td>
+                <td>{{ r.PName }}</td>
+                <td>{{ r.PhoneNo }}</td>
+                <td>{{ r.Age }}</td>
+                <td>{{ r.Gender }}</td>
+                <td>{{ r.VisitType }}</td>
+                <td>{{ r.Date }}</td>
+                <td>{{ r.PaymentMode }}</td>
+                <td>{{ r.AmountPaid }}</td>
+                <td>{{ r.ProcedureName }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="10" class="muted">
+                {% if search_active %}No matches.{% else %}No entries yet today.{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    
+    <script>
+        // Show/hide Procedure Name field depending on OPProc selection
+        const opProcSelect = document.querySelector('select[name="OPProc"]');
+        const procRow = document.getElementById('procedure-name-row');
+
+        opProcSelect.addEventListener('change', function () {
+            if (this.value === 'proc') {
+                procRow.style.display = 'flex';
+            } else {
+                procRow.style.display = 'none';
+            }
+        });
+    </script>
+
+    <script>
+        const nameInput = document.getElementById('PName');
+        const idInput = document.getElementById('UHId');
+        let pending = null;
+        let lastGeneratedName = '';  // Track the name that generated the current UHId
+
+        nameInput.addEventListener('input', () => {
+            const name = nameInput.value.trim();
+            if (name.length < 3) {
+                // clear UHId if less than 3 chars
+                if (idInput.value && lastGeneratedName) {
+                    idInput.value = '';
+                    lastGeneratedName = '';
+                }
+                return;
+            }
+
+            // debounce requests a bit
+            if (pending) clearTimeout(pending);
+            pending = setTimeout(async () => {
+            try {
+                const resp = await fetch(`/api/generate_id?name=${encodeURIComponent(name)}`);
+                const data = await resp.json();
+                if (resp.ok && data.client_id) {
+                idInput.value = data.client_id;
+                }
+            } catch (e) {
+                console.warn('UHId generation failed:', e);
+            }
+            }, 250);
+        });
+    </script>
+
+    <script>
+  // Toggle text vs date input based on dropdown
+        (function() {
+            const fieldSel = document.getElementById('searchField');
+            const textWrap = document.getElementById('searchTextWrap');
+            const dateWrap = document.getElementById('searchDateWrap');
+
+            function syncInputs() {
+            if (fieldSel.value === 'date') {
+                textWrap.style.display = 'none';
+                dateWrap.style.display = 'flex';
+            } else {
+                textWrap.style.display = 'flex';
+                dateWrap.style.display = 'none';
+            }
+            }
+            fieldSel.addEventListener('change', syncInputs);
+            // Initialize on load using server-selected value
+            syncInputs();
+        })();
+    </script>
+
+{% endblock %}
