@@ -26,15 +26,15 @@ USE_SQLITE = os.getenv("USE_SQLITE", "0") == "1"
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")  # Needed for sessions
 
-# Keep-alive configuration
+# Keep-alive configuration``
 KEEP_ALIVE_ENABLED = os.getenv("KEEP_ALIVE_ENABLED", "1") == "1"
 KEEP_ALIVE_INTERVAL = int(os.getenv("KEEP_ALIVE_INTERVAL", "840"))  # 14 minutes
 APP_URL = os.getenv("APP_URL", "ims-2024.onrender.com")  # Set this to your Render app URL
 
 # Register Blueprints
-app.register_blueprint(inventory_bp)
-app.register_blueprint(patient_bp)
-app.register_blueprint(payments_bp)
+app.register_blueprint(inventory_bp, url_prefix='/inventory')
+app.register_blueprint(patient_bp, url_prefix='/patient')
+app.register_blueprint(payments_bp, url_prefix='/payments')
 app.register_blueprint(pharmacy_bp, url_prefix='/pharmacy')
 app.register_blueprint(reports_bp, url_prefix='/reports')
 
@@ -88,10 +88,10 @@ def keep_alive():
 
 @app.route("/pharmacy")
 def pharmacy():
-    """Pharmacy management page"""
+    """Redirect to pharmacy blueprint so data loads correctly in the blueprint route"""
     if "username" not in session:
         return redirect(url_for("login"))
-    return render_template("pharmacy.html", active_page="pharmacy")
+    return redirect(url_for("pharmacy.pharmacy")) # Because the data is loaded in the blueprint route
 
 @app.route("/view-sales")
 def view_sales():

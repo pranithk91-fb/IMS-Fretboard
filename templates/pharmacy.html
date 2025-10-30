@@ -1,228 +1,453 @@
-{% extends "base.html" %}
-
-{% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pharmacy.css') }}">
-{% endblock %}
-
-{% block title %}Pharmacy - IMS{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block head_extra %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/pharmacy.css') }}"
+/>
+<!-- Select2 CSS (for searchable dropdown like inventory) -->
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+{% endblock %} {% block title %}Pharmacy - IMS{% endblock %} {% block content %}
 <div class="container">
-    <header class="main-header">
-        <h2 class="page-title">Pharmacy</h2>
-    </header>
+  <header class="main-header">
+    <h2 class="page-title">Pharmacy</h2>
+  </header>
 
-    <div class="content">
-        <!-- Patient Details Section -->
-        <div class="patient-section">
-            <legend>Patient Details</legend>
-            
-            <form method="POST" action="{{ url_for('pharmacy.pharmacy') }}" class="pharmacy-form">
-                <div class="form-row">
-                    <div class="field">
-                        <label for="patient_name">Patient Name *</label>
-                        <input type="text" 
-                               id="patient_name" 
-                               name="patient_name" 
-                               list="patients_list" 
-                               placeholder="Select or enter patient name"
-                               required>
-                        <datalist id="patients_list">
-                            {% for patient in today_patients %}
-                            <option value="{{ patient.PName }}" 
-                                    data-phone="{{ patient.Phone }}" 
-                                    data-uhid="{{ patient.UHId }}">
-                                {{ patient.PName }} ({{ patient.UHId }})
-                            </option>
-                            {% endfor %}
-                        </datalist>
-                    </div>
-                    
-                    <div class="field">
-                        <label for="phone_no">Phone Number</label>
-                        <input type="tel" 
-                               id="phone_no" 
-                               name="phone_no" 
-                               placeholder="Enter phone number"
-                               pattern="[0-9]{10}">
-                    </div>
-                    
-                    <div class="field">
-                        <label for="uhid">UHId</label>
-                        <input type="text" 
-                               id="uhid" 
-                               name="uhid" 
-                               placeholder="Patient UHId"
-                               readonly>
-                    </div>
-                </div>
+  <div class="content">
+    <!-- Patient Details Section -->
+    <div class="patient-section">
+      <legend>Patient Details</legend>
 
-                <!-- Medicines Section -->
-                <legend>Medicines</legend>
-                
-                <div class="medicines-section">
-                    <div class="add-medicine-row">
-                        <div class="field">
-                            <label for="medicine_name">Medicine Name</label>
-                            <select id="medicine_name" name="medicine_name">
-                                <option value="">Select Medicine</option>
-                                {% for medicine in medicines %}
-                                <option value="{{ medicine.MedicineName }}" 
-                                        data-price="{{ medicine.MRP }}"
-                                        data-mid="{{ medicine.MId }}">
-                                    {{ medicine.MedicineName }} - ₹{{ medicine.MRP }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+      <form
+        method="POST"
+        action="{{ url_for('pharmacy.pharmacy') }}"
+        class="pharmacy-form"
+      >
+        <div class="form-row">
+          <div class="field">
+            <label for="patient_name">Patient Name *</label>
+            <input
+              type="text"
+              id="patient_name"
+              name="patient_name"
+              list="patients_list"
+              placeholder="Select or enter patient name"
+              required
+            />
+            <datalist id="patients_list">
+              {% for patient in today_patients %}
+              <option
+                value="{{ patient.PName }}"
+                data-phone="{{ patient.Phone }}"
+                data-uhid="{{ patient.UHId }}"
+              >
+                {{ patient.PName }} ({{ patient.UHId }})
+              </option>
+              {% endfor %}
+            </datalist>
+          </div>
 
-                        <div class="field">
-                            <label for="BatchNo">Batch No</label>
-                            <input type="text" 
-                                   id="dosage" 
-                                   name="dosage" 
-                                   placeholder="e.g., 1-0-1">
-                        </div>
-                        
-                        <div class="field">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" 
-                                   id="quantity" 
-                                   name="quantity" 
-                                   min="1" 
-                                   placeholder="Qty">
-                        </div>
-                        
-                        
-                        
-                        <div class="field">
-                            <label for="duration">Duration</label>
-                            <input type="text" 
-                                   id="duration" 
-                                   name="duration" 
-                                   placeholder="e.g., 7 days">
-                        </div>
-                        
-                        <div class="field">
-                            <button type="button" id="add_medicine_btn" class="btn-add">Add Medicine</button>
-                        </div>
-                    </div>
-                </div>
+          <div class="field">
+            <label for="phone_no">Phone Number</label>
+            <input
+              type="tel"
+              id="phone_no"
+              name="phone_no"
+              placeholder="Enter phone number"
+              pattern="[0-9]{10}"
+            />
+          </div>
 
-                <!-- Medicines Table -->
-                <div class="medicines-table-section">
-                    <table class="medicines-table" id="medicines_table">
-                        <thead>
-                            <tr>
-                                <th>Medicine</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Dosage</th>
-                                <th>Duration</th>
-                                <th>Total</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="medicines_tbody">
-                            <!-- Medicines will be added here -->
-                        </tbody>
-                        <tfoot>
-                            <tr class="total-row">
-                                <td colspan="5"><strong>Total Amount:</strong></td>
-                                <td id="grand_total"><strong>₹0.00</strong></td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-
-                <!-- Submit Section -->
-                <div class="actions">
-                    <button type="submit" class="btn-submit">Submit Prescription</button>
-                    <button type="reset" class="btn-reset">Clear Form</button>
-                </div>
-            </form>
+          <div class="field">
+            <label for="uhid">UHId</label>
+            <input
+              type="text"
+              id="uhid"
+              name="uhid"
+              placeholder="Patient UHId"
+              readonly
+            />
+          </div>
         </div>
+
+        <!-- Medicines Section -->
+        <legend>Medicines</legend>
+
+        <!-- Debudding messages cause not able to load the medicines in the blueprint route -->
+        {% if medicines %}
+        <p style="color: green; font-size: 12px; margin: 5px 0">
+          ✓ Loaded {{ medicines|length }} medicines
+        </p>
+        {% else %}
+        <p style="color: red; font-size: 12px; margin: 5px 0">
+          ✗ No medicines loaded!
+        </p>
+        {% endif %}
+
+        <div class="medicines-section">
+          <div class="add-medicine-row">
+            <div class="field">
+              <label for="medicine_name">Medicine Name</label>
+              <select
+                id="medicine_name"
+                name="medicine_name"
+                class="medicine-select"
+              >
+                <option value="">Select Medicine</option>
+                {% for medicine in medicines %}
+                <option
+                  value="{{ medicine.MName }}"
+                  data-price="{{ medicine.MRP }}"
+                  data-mid="{{ medicine.MId }}"
+                  data-company="{{ medicine.MCompany }}"
+                  data-stock="{{ medicine.CurrentStock }}"
+                  data-type="{{ medicine.MType }}"
+                >
+                  {{ medicine.MName }} - ₹{{ medicine.MRP }} (Stock: {{
+                  medicine.CurrentStock }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="batch_no">Batch No</label>
+              <input
+                type="text"
+                id="batch_no"
+                name="batch_no"
+                value="-"
+                placeholder="-"
+                readonly
+              />
+            </div>
+
+            <div class="field">
+              <label for="quantity">Quantity</label>
+              <input
+                type="number"
+                id="quantity"
+                name="quantity"
+                min="1"
+                placeholder="Qty"
+              />
+            </div>
+
+            <div class="field">
+              <label for="duration">Duration</label>
+              <input
+                type="text"
+                id="duration"
+                name="duration"
+                placeholder="e.g., 7 days"
+              />
+            </div>
+
+            <div class="field">
+              <button type="button" id="add_medicine_btn" class="btn-add">
+                Add Medicine
+              </button>
+            </div>
+          </div>
+
+          <!-- Medicine Details Display Section (separate block below selection) -->
+          <div
+            class="medicine-details-section"
+            id="medicine_details_section"
+            style="display: none"
+          >
+            <div class="details-card">
+              <h4 class="details-title">Medicine Details</h4>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="detail-label">MRP:</span>
+                  <span class="detail-value" id="detail_mrp">-</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Type:</span>
+                  <span class="detail-value" id="detail_type">-</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Batch No:</span>
+                  <span class="detail-value" id="detail_batch">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medicines Table -->
+        <div class="medicines-table-section">
+          <table class="medicines-table" id="medicines_table">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Duration</th>
+                <th>Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="medicines_tbody">
+              <!-- Medicines will be added here -->
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="4"><strong>Total Amount:</strong></td>
+                <td id="grand_total"><strong>₹0.00</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="actions">
+          <button type="submit" class="btn-submit">Submit Prescription</button>
+          <button type="reset" class="btn-reset">Clear Form</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
 <script>
-// Auto-fill patient details when selected from dropdown
-document.getElementById('patient_name').addEventListener('input', function() {
-    const patientName = this.value;
-    const phoneInput = document.getElementById('phone_no');
-    const uhidInput = document.getElementById('uhid');
-    
-    // Find matching patient from datalist
-    const option = [...document.querySelectorAll('#patients_list option')]
-        .find(opt => opt.value === patientName);
-    
-    if (option) {
-        phoneInput.value = option.dataset.phone || '';
-        uhidInput.value = option.dataset.uhid || '';
-    } else {
+  // jQuery & Select2 (used in inventory) for searchable dropdown
+  (function () {
+    const scriptJq = document.createElement("script");
+    scriptJq.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+    scriptJq.onload = function () {
+      const scriptS2 = document.createElement("script");
+      scriptS2.src =
+        "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js";
+      scriptS2.onload = function () {
+        if (window.$ && $.fn && $.fn.select2) {
+          try {
+            $(".medicine-select").select2({
+              placeholder: "Select Medicine",
+              allowClear: true,
+              width: "resolve",
+            });
+          } catch (e) {
+            console.warn("Select2 init failed:", e);
+          }
+        }
+      };
+      document.body.appendChild(scriptS2);
+    };
+    document.body.appendChild(scriptJq);
+  })();
+
+  // Auto-fill patient details when selected from dropdown
+  document
+    .getElementById("patient_name")
+    .addEventListener("input", function () {
+      const patientName = this.value;
+      const phoneInput = document.getElementById("phone_no");
+      const uhidInput = document.getElementById("uhid");
+
+      // Find matching patient from datalist
+      const option = [
+        ...document.querySelectorAll("#patients_list option"),
+      ].find((opt) => opt.value === patientName);
+
+      if (option) {
+        phoneInput.value = option.dataset.phone || "";
+        uhidInput.value = option.dataset.uhid || "";
+      } else {
         // Clear fields for new patient
-        phoneInput.value = '';
-        uhidInput.value = '';
+        phoneInput.value = "";
+        uhidInput.value = "";
+      }
+    });
+
+  // Handle medicine selection and fetch details
+  function handleMedicineSelection() {
+    const medicineSelect = document.getElementById("medicine_name");
+    const medicineName = medicineSelect.value;
+
+    const detailsSection = document.getElementById("medicine_details_section");
+    const batchNoInput = document.getElementById("batch_no");
+
+    if (!medicineName) {
+      // Hide details section if no medicine selected
+      detailsSection.style.display = "none";
+      batchNoInput.value = "";
+      return;
     }
-});
 
-// Medicine management
-let medicineCount = 0;
-let grandTotal = 0;
+    // Show loading state
+    detailsSection.style.display = "block";
+    document.getElementById("detail_mrp").textContent = "Loading...";
+    document.getElementById("detail_type").textContent = "Loading...";
+    document.getElementById("detail_batch").textContent = "Loading...";
 
-document.getElementById('add_medicine_btn').addEventListener('click', function() {
-    const medicineName = document.getElementById('medicine_name');
-    const quantity = document.getElementById('quantity');
-    const dosage = document.getElementById('dosage');
-    const duration = document.getElementById('duration');
-    
-    if (!medicineName.value || !quantity.value) {
-        alert('Please select medicine and enter quantity');
+    // Fetch medicine details from backend using pharmacy base URL
+    const detailsUrl = `{{ url_for('pharmacy.pharmacy') }}api/medicine-details?name=${encodeURIComponent(
+      medicineName
+    )}`;
+    console.log("[Pharmacy UI] 🔍 Fetching:", detailsUrl);
+
+    fetch(detailsUrl)
+      .then((response) => {
+        console.log("[Pharmacy UI] 📡 Response status:", response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        // Read as text first to see raw response
+        return response.text();
+      })
+      .then((text) => {
+        console.log("[Pharmacy UI] 📄 Raw response text:", text);
+        // Parse JSON
+        const payload = JSON.parse(text);
+        console.log("[Pharmacy UI] 📦 Parsed JSON:", payload);
+        console.log(
+          "[Pharmacy UI] ✓ success:",
+          payload.success,
+          "| data:",
+          payload.data
+        );
+
+        if (payload && payload.success && payload.data) {
+          const medicine = payload.data;
+          console.log("[Pharmacy UI] 💊 Medicine data:", medicine);
+
+          // Update detail labels - MRP, Type, BatchNo only
+          document.getElementById("detail_mrp").textContent =
+            medicine.MRP != null && medicine.MRP !== ""
+              ? `₹${parseFloat(medicine.MRP).toFixed(2)}`
+              : "-";
+          document.getElementById("detail_type").textContent =
+            medicine.MType || "-";
+          document.getElementById("detail_batch").textContent =
+            medicine.BatchNo || "-";
+
+          // Auto-fill batch number in the input field
+          batchNoInput.value = medicine.BatchNo || "-";
+          console.log("[Pharmacy UI] ✅ Details updated successfully");
+        } else {
+          // Show error state
+          console.error("[Pharmacy UI] ❌ Invalid payload structure:", payload);
+          document.getElementById("detail_mrp").textContent = "Error";
+          document.getElementById("detail_type").textContent = "Error";
+          document.getElementById("detail_batch").textContent = "Error";
+        }
+      })
+      .catch((error) => {
+        console.error("[Pharmacy UI] ❌ Fetch error:", error);
+        document.getElementById("detail_mrp").textContent = "Error";
+        document.getElementById("detail_type").textContent = "Error";
+        document.getElementById("detail_batch").textContent = "Error";
+      });
+  }
+
+  // Attach event listener to medicine select (works with both regular select and select2)
+  document
+    .getElementById("medicine_name")
+    .addEventListener("change", handleMedicineSelection);
+
+  // Also handle select2 change event (after select2 is initialized)
+  setTimeout(() => {
+    if (window.$ && $.fn && $.fn.select2) {
+      $("#medicine_name").on("select2:select", handleMedicineSelection);
+      $("#medicine_name").on("select2:clear", function () {
+        document.getElementById("medicine_details_section").style.display =
+          "none";
+        document.getElementById("batch_no").value = "-";
+      });
+    }
+  }, 500);
+
+  // Medicine management
+  let medicineCount = 0;
+  let grandTotal = 0;
+
+  document
+    .getElementById("add_medicine_btn")
+    .addEventListener("click", function () {
+      const medicineName = document.getElementById("medicine_name");
+      const quantity = document.getElementById("quantity");
+      const dosage = { value: "" };
+      const duration = document.getElementById("duration");
+
+      if (!medicineName.value || !quantity.value) {
+        alert("Please select medicine and enter quantity");
         return;
-    }
-    
-    const selectedOption = medicineName.options[medicineName.selectedIndex];
-    const price = parseFloat(selectedOption.dataset.price) || 0;
-    const total = price * parseInt(quantity.value);
-    
-    // Add to table
-    const tbody = document.getElementById('medicines_tbody');
-    const row = tbody.insertRow();
-    medicineCount++;
-    
-    row.innerHTML = `
+      }
+
+      const selectedOption = medicineName.options[medicineName.selectedIndex];
+      const price = parseFloat(selectedOption.dataset.price) || 0;
+      const stock = parseInt(selectedOption.dataset.stock) || 0;
+      const requestedQty = parseInt(quantity.value);
+
+      // Validate stock availability
+      if (requestedQty > stock) {
+        alert(
+          `Insufficient stock! Available: ${stock}, Requested: ${requestedQty}`
+        );
+        return;
+      }
+
+      const total = price * requestedQty;
+
+      // Add to table
+      const tbody = document.getElementById("medicines_tbody");
+      const row = tbody.insertRow();
+      medicineCount++;
+
+      row.innerHTML = `
         <td>${medicineName.value}</td>
         <td>${quantity.value}</td>
         <td>₹${price.toFixed(2)}</td>
-        <td>${dosage.value}</td>
-        <td>${duration.value}</td>
+        
+        <td>${duration.value || "-"}</td>
         <td>₹${total.toFixed(2)}</td>
         <td><button type="button" class="btn-remove" onclick="removeMedicine(this, ${total})">Remove</button></td>
-        <input type="hidden" name="medicine_${medicineCount}" value="${medicineName.value}">
-        <input type="hidden" name="quantity_${medicineCount}" value="${quantity.value}">
+        <input type="hidden" name="medicine_${medicineCount}" value="${
+        medicineName.value
+      }">
+        <input type="hidden" name="quantity_${medicineCount}" value="${
+        quantity.value
+      }">
         <input type="hidden" name="price_${medicineCount}" value="${price}">
-        <input type="hidden" name="dosage_${medicineCount}" value="${dosage.value}">
-        <input type="hidden" name="duration_${medicineCount}" value="${duration.value}">
+        
+        <input type="hidden" name="duration_${medicineCount}" value="${
+        duration.value || ""
+      }">
         <input type="hidden" name="total_${medicineCount}" value="${total}">
     `;
-    
-    // Update grand total
-    grandTotal += total;
-    document.getElementById('grand_total').innerHTML = `<strong>₹${grandTotal.toFixed(2)}</strong>`;
-    
-    // Clear inputs
-    medicineName.selectedIndex = 0;
-    quantity.value = '';
-    dosage.value = '';
-    duration.value = '';
-});
 
-function removeMedicine(button, amount) {
-    button.closest('tr').remove();
+      // Update grand total
+      grandTotal += total;
+      document.getElementById(
+        "grand_total"
+      ).innerHTML = `<strong>₹${grandTotal.toFixed(2)}</strong>`;
+
+      // Clear inputs and hide medicine details section
+      medicineName.selectedIndex = 0;
+      quantity.value = "";
+
+      duration.value = "";
+      document.getElementById("batch_no").value = "";
+      document.getElementById("medicine_details_section").style.display =
+        "none";
+
+      // Trigger select2 clear if available
+      if (window.$ && $.fn && $.fn.select2) {
+        $("#medicine_name").val(null).trigger("change");
+      }
+    });
+
+  function removeMedicine(button, amount) {
+    button.closest("tr").remove();
     grandTotal -= amount;
-    document.getElementById('grand_total').innerHTML = `<strong>₹${grandTotal.toFixed(2)}</strong>`;
-}
+    document.getElementById(
+      "grand_total"
+    ).innerHTML = `<strong>₹${grandTotal.toFixed(2)}</strong>`;
+  }
 </script>
 
 {% endblock %}
