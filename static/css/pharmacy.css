@@ -116,6 +116,15 @@ legend:first-child {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .details-card {
   background: linear-gradient(135deg, #fff5f0, #ffffff);
   border: 2px solid #da7422;
@@ -269,6 +278,100 @@ legend:first-child {
   background: linear-gradient(135deg, #c82333, #bd2130);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+/* Select2 Styling for Patient Dropdown */
+.patient-select {
+  width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single {
+  height: 45px !important;
+  padding: 8px 16px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+}
+
+.select2-container--default
+  .select2-selection--single
+  .select2-selection__rendered {
+  line-height: 28px !important;
+  padding-left: 0 !important;
+}
+
+.select2-container--default
+  .select2-selection--single
+  .select2-selection__arrow {
+  height: 43px !important;
+}
+
+/* New patient indicator styling */
+.new-patient-indicator {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-left: 4px solid #2196f3;
+  border-radius: 6px;
+  animation: fadeIn 0.3s ease-out;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.2);
+}
+
+/* Patient Section Enhancements */
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-style: italic;
+}
+
+#additional_patient_fields {
+  margin-top: 10px;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8f4fd, #f0f9ff);
+  border: 2px dashed #2196f3;
+  border-radius: 12px;
+  animation: slideDown 0.3s ease-out;
+}
+
+#additional_patient_fields .field label {
+  color: #1976d2;
+  font-weight: 600;
+}
+
+#additional_patient_fields .field input,
+#additional_patient_fields .field select {
+  border-color: #90caf9;
+}
+
+#additional_patient_fields .field input:focus,
+#additional_patient_fields .field select:focus {
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Patient hint styling */
+#patient_hint {
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: 4px;
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Phone required indicator */
+#phone_required {
+  font-weight: bold;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Actions Section */

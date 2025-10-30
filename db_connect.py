@@ -7,7 +7,8 @@ except Exception:
     pass
 
 USE_SQLITE = os.getenv("USE_SQLITE", "0") == "1"
-SQLITE_PATH = os.getenv("SQLITE_PATH", "database/medicalstore.db")
+# IMPORTANT: Match actual file name casing to avoid creating an empty DB
+SQLITE_PATH = os.getenv("SQLITE_PATH", "database/medicalStore.db")
 
 class SQLiteClient:
     """Minimal shim to mimic libsql_client's .execute(...).rows API."""

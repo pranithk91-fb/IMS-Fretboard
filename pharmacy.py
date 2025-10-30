@@ -117,14 +117,85 @@ def api_medicine_details_query():
         return jsonify({'success': False, 'message': 'name is required'}), 400
     return get_medicine_details(name)
 
+def generate_uhid():
+    """Generate a new UHId based on date and existing records"""
+    try:
+        today = datetime.now().strftime('%Y-%m-%d')
+        year_month = datetime.now().strftime('%y%m')  # YYMM format
+        
+        # Get today's patients to find the next available letter+number combo
+        result = client.execute("""
+            SELECT UHId FROM Patients 
+            WHERE substr(Date, 1, 10) = ?
+            ORDER BY UHId DESC
+            LIMIT 1
+        """, [today])
+        
+        if hasattr(result, 'rows') and result.rows:
+            last_uhid = result.rows[0][0]
+            # Extract the numeric part (last 3 digits)
+            if last_uhid and len(last_uhid) >= 7:
+                try:
+                    last_num = int(last_uhid[-3:])
+                    next_num = last_num + 1
+                    # Use letters in rotation: A, B, C, ... Z
+                    letter = chr(65 + (next_num // 100) % 26)  # A=65
+                    return f"{year_month}{letter}{next_num:03d}"
+                except:
+                    pass
+        
+        # Default: start with A001
+        return f"{year_month}A001"
+    except Exception as e:
+        logger.error(f"Error generating UHId: {str(e)}")
+        return f"{datetime.now().strftime('%y%m')}A001"
+
 @pharmacy_bp.route('/', methods=['GET', 'POST'])
 def pharmacy():
     try:
         if request.method == 'POST':
             # Process prescription submission
-            patient_name = request.form.get('patient_name')
-            phone_no = request.form.get('phone_no') 
-            uhid = request.form.get('uhid')
+            patient_name = request.form.get('patient_name', '').strip()
+            phone_no = request.form.get('phone_no', '').strip()
+            uhid = request.form.get('uhid', '').strip()
+            age = request.form.get('age', '').strip()
+            gender = request.form.get('gender', '').strip()
+            payment_mode = (request.form.get('payment_mode', '') or '').strip()
+            cash_amount_raw = (request.form.get('cash_amount', '') or '').strip()
+            upi_amount_raw = (request.form.get('upi_amount', '') or '').strip()
+            
+            # Validate required fields
+            if not patient_name:
+                flash('Patient name is required', 'error')
+                return redirect(url_for('pharmacy.pharmacy'))
+            
+            # Check if this is a new patient (no UHId or not in today's patients)
+            if not uhid:
+                logger.info(f"🆕 New patient detected: {patient_name}")
+
+                # Only add to Patients table if phone number is provided; otherwise continue without registering
+                if phone_no:
+                    try:
+                        # Generate new UHId
+                        uhid = generate_uhid()
+                        today_date = datetime.now().strftime('%Y-%m-%d')
+
+                        # Insert new patient record
+                        client.execute("""
+                            INSERT INTO Patients (UHId, Date, PName, PhoneNo, Age, Gender)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        """, [uhid, today_date, patient_name, phone_no, age if age else None, gender if gender else None])
+
+                        logger.info(f"✓ New patient added to database: {patient_name} (UHId: {uhid})")
+                        flash(f'New patient registered with UHId: {uhid}', 'info')
+                    except Exception as patient_error:
+                        logger.error(f"❌ Error adding new patient: {str(patient_error)}")
+                        flash('Could not register patient in database', 'warning')
+                        uhid = f"TEMP-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                else:
+                    # No phone provided; do not add to Patients table and proceed without UHId (use TEMP for linkage)
+                    logger.info(f"ℹ New patient '{patient_name}' without phone number - skipping Patients table insert")
+                    uhid = f"TEMP-{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
             # Get medicines data
             medicines = []
@@ -147,6 +218,38 @@ def pharmacy():
             
             # Calculate total amount
             total_amount = sum(med['total'] for med in medicines)
+
+            # Normalize payment inputs
+            def _to_float(value: str) -> float:
+                try:
+                    return float(value)
+                except Exception:
+                    return 0.0
+
+            cash_amount = _to_float(cash_amount_raw)
+            upi_amount = _to_float(upi_amount_raw)
+
+            if payment_mode == 'Cash':
+                cash_amount = total_amount
+                upi_amount = 0.0
+            elif payment_mode == 'UPI':
+                upi_amount = total_amount
+                cash_amount = 0.0
+            elif payment_mode == 'Both':
+                # If client sent mismatched values, cap to total and adjust
+                if cash_amount < 0:
+                    cash_amount = 0.0
+                if upi_amount < 0:
+                    upi_amount = 0.0
+                s = cash_amount + upi_amount
+                if abs(s - total_amount) > 0.01:
+                    logger.warning(f"[Pharmacy] Payment split mismatch: cash={cash_amount}, upi={upi_amount}, total={total_amount}. Adjusting upi part.")
+                    upi_amount = max(0.0, total_amount - cash_amount)
+            else:
+                # Default fallback to Cash if not provided
+                payment_mode = 'Cash'
+                cash_amount = total_amount
+                upi_amount = 0.0
             
             # Insert prescription record
             prescription_id = f"RX-{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -161,6 +264,35 @@ def pharmacy():
                 total_amount, 
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ])
+
+            # Store payment info in a dedicated table (created if missing)
+            try:
+                client.execute("""
+                    CREATE TABLE IF NOT EXISTS PrescriptionPayments (
+                        PrescriptionId TEXT PRIMARY KEY,
+                        PaymentMode TEXT NOT NULL,
+                        CashAmount REAL DEFAULT 0,
+                        UPIAmount REAL DEFAULT 0,
+                        CreatedDate TEXT
+                    )
+                """)
+
+                client.execute(
+                    """
+                    INSERT OR REPLACE INTO PrescriptionPayments (
+                        PrescriptionId, PaymentMode, CashAmount, UPIAmount, CreatedDate
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    [
+                        prescription_id,
+                        payment_mode,
+                        round(cash_amount, 2),
+                        round(upi_amount, 2),
+                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    ]
+                )
+            except Exception as pay_err:
+                logger.error(f"❌ Error saving payment info: {str(pay_err)}", exc_info=True)
             
             # Insert medicine details
             for medicine in medicines:
@@ -175,21 +307,106 @@ def pharmacy():
                     medicine['total']
                 ])
             
-            flash(f'Prescription {prescription_id} created successfully!', 'success')
+            flash(f'Prescription {prescription_id} created successfully! Payment: {payment_mode} (Cash ₹{cash_amount:.2f}, UPI ₹{upi_amount:.2f})', 'success')
             return redirect(url_for('pharmacy.pharmacy'))
         
         # GET request - display form
-        # Get today's registered patients
+        # Get today's registered patients strictly by Date
         today = datetime.now().strftime('%Y-%m-%d')
-        # Use correct Patients schema: columns are PName, PhoneNo, UHId, Date
-        # Match records for today using the first 10 chars of Date (YYYY-MM-DD)
-        patients_result = client.execute("""
-            SELECT DISTINCT PName, PhoneNo, UHId 
-            FROM Patients 
-            WHERE substr(Date, 1, 10) = ?
-            ORDER BY PName
-        """, [today])
-        today_patients = [dict(zip(['PName', 'Phone', 'UHId'], row)) for row in patients_result.rows]
+        patients_display_date = today
+        try:
+            # Debug: Check what Date values actually exist in the database
+            debug_result = client.execute("""
+                SELECT DISTINCT substr(TRIM(Date), 1, 10) as DateShort, Date as DateFull, COUNT(*) as cnt
+                FROM Patients 
+                GROUP BY DateShort
+                ORDER BY DateShort DESC
+                LIMIT 5
+            """)
+            logger.info(f"[Pharmacy] DEBUG: Sample Date values in database:")
+            if hasattr(debug_result, 'rows') and debug_result.rows:
+                for row in debug_result.rows[:5]:
+                    logger.info(f"  DateShort: '{row[0]}', DateFull: '{row[1]}', Count: {row[2]}")
+            else:
+                logger.warning("[Pharmacy] DEBUG: No rows returned from debug query")
+            
+            logger.info(f"[Pharmacy] DEBUG: Looking for patients with Date matching: '{today}'")
+            
+            # TEST: Try fetching 2025-10-23 (which we know exists) to verify query works
+            test_date = "2025-10-23"
+            test_result = client.execute("""
+                SELECT DISTINCT PName, PhoneNo, UHId 
+                FROM Patients 
+                WHERE Date = ?
+                ORDER BY PName
+            """, [test_date])
+            test_count = len(getattr(test_result, 'rows', []) or [])
+            logger.info(f"[Pharmacy] TEST: Query for {test_date} returned {test_count} patient(s)")
+            if test_count > 0:
+                logger.info(f"[Pharmacy] TEST: Sample rows from {test_date}: {test_result.rows[:2]}")
+            
+            # Try multiple query formats for today
+            patients_result = client.execute("""
+                SELECT DISTINCT PName, PhoneNo, UHId 
+                FROM Patients 
+                WHERE Date = ?
+                ORDER BY PName
+            """, [today])
+            
+            row_count = len(getattr(patients_result, 'rows', []) or [])
+            logger.info(f"[Pharmacy] Loaded {row_count} patient(s) for date {today}")
+            
+            # If no results, try alternative queries
+            if row_count == 0:
+                logger.info(f"[Pharmacy] Trying alternative query with substr: substr(TRIM(Date), 1, 10) = '{today}'")
+                patients_result = client.execute("""
+                    SELECT DISTINCT PName, PhoneNo, UHId 
+                    FROM Patients 
+                    WHERE substr(TRIM(Date), 1, 10) = ?
+                    ORDER BY PName
+                """, [today])
+                row_count = len(getattr(patients_result, 'rows', []) or [])
+                logger.info(f"[Pharmacy] Alternative query returned {row_count} patient(s)")
+                
+                # Also check if there's a patient with UHId 2510A0143 (from the image)
+                specific_uhid = "2510A0143"
+                specific_result = client.execute("""
+                    SELECT PName, PhoneNo, UHId, Date
+                    FROM Patients 
+                    WHERE UHId = ?
+                """, [specific_uhid])
+                if hasattr(specific_result, 'rows') and specific_result.rows:
+                    logger.info(f"[Pharmacy] Found patient with UHId {specific_uhid}: Date='{specific_result.rows[0][3]}'")
+
+            # If still none, fall back to most recent available date in DB (helps environments without same-day data)
+            if row_count == 0:
+                latest_result = client.execute("""
+                    SELECT substr(TRIM(Date),1,10) as DateShort
+                    FROM Patients
+                    WHERE Date IS NOT NULL AND TRIM(Date) <> ''
+                    ORDER BY DateShort DESC
+                    LIMIT 1
+                """)
+                if hasattr(latest_result, 'rows') and latest_result.rows:
+                    latest_date = latest_result.rows[0][0]
+                    if latest_date and latest_date != today:
+                        logger.info(f"[Pharmacy] No patients for today; falling back to latest date: {latest_date}")
+                        patients_display_date = latest_date
+                        patients_result = client.execute("""
+                            SELECT DISTINCT PName, PhoneNo, UHId 
+                            FROM Patients 
+                            WHERE substr(TRIM(Date), 1, 10) = ?
+                            ORDER BY PName
+                        """, [latest_date])
+                        row_count = len(getattr(patients_result, 'rows', []) or [])
+                        logger.info(f"[Pharmacy] Fallback loaded {row_count} patient(s) for date {latest_date}")
+            
+            if row_count > 0:
+                logger.info(f"[Pharmacy] Sample patient rows: {patients_result.rows[:3]}")
+            today_patients = [dict(zip(['PName', 'Phone', 'UHId'], row)) for row in getattr(patients_result, 'rows', [])]
+        except Exception as patient_load_err:
+            logger.error(f"✗ Error loading today's patients: {str(patient_load_err)}", exc_info=True)
+            today_patients = []
         
         # Get available medicines from MedicineList table
         medicines = []
@@ -231,6 +448,7 @@ def pharmacy():
                              today_patients=today_patients,
                              medicines=medicines,
                              today_date=today,
+                             patients_display_date=patients_display_date,
                              active_page='pharmacy')
         
     except Exception as e:
@@ -240,4 +458,5 @@ def pharmacy():
                              today_patients=[],
                              medicines=[],
                              today_date=datetime.now().strftime('%Y-%m-%d'),
+                             patients_display_date=datetime.now().strftime('%Y-%m-%d'),
                              active_page='pharmacy')
