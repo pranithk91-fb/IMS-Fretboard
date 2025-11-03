@@ -44,6 +44,7 @@ __pycache__/
 # Logs
 *.log
 logs/
+feature-create.md
 
 # OS files
 .DS_Store
@@ -60,3 +61,4 @@ __pycache__/inventory.cpython-310.pyc
 static/js/test-data.js
 check_db.py
 db_update.py
+bash.exe.stackdump
