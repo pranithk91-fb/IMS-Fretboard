@@ -265,35 +265,6 @@ def pharmacy():
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ])
 
-            # Store payment info in a dedicated table (created if missing)
-            try:
-                client.execute("""
-                    CREATE TABLE IF NOT EXISTS PrescriptionPayments (
-                        PrescriptionId TEXT PRIMARY KEY,
-                        PaymentMode TEXT NOT NULL,
-                        CashAmount REAL DEFAULT 0,
-                        UPIAmount REAL DEFAULT 0,
-                        CreatedDate TEXT
-                    )
-                """)
-
-                client.execute(
-                    """
-                    INSERT OR REPLACE INTO PrescriptionPayments (
-                        PrescriptionId, PaymentMode, CashAmount, UPIAmount, CreatedDate
-                    ) VALUES (?, ?, ?, ?, ?)
-                    """,
-                    [
-                        prescription_id,
-                        payment_mode,
-                        round(cash_amount, 2),
-                        round(upi_amount, 2),
-                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    ]
-                )
-            except Exception as pay_err:
-                logger.error(f"❌ Error saving payment info: {str(pay_err)}", exc_info=True)
-            
             # Insert medicine details
             for medicine in medicines:
                 client.execute("""
@@ -313,7 +284,6 @@ def pharmacy():
         # GET request - display form
         # Get today's registered patients strictly by Date
         today = datetime.now().strftime('%Y-%m-%d')
-        patients_display_date = today
         try:
             # Debug: Check what Date values actually exist in the database
             debug_result = client.execute("""
@@ -378,29 +348,6 @@ def pharmacy():
                 if hasattr(specific_result, 'rows') and specific_result.rows:
                     logger.info(f"[Pharmacy] Found patient with UHId {specific_uhid}: Date='{specific_result.rows[0][3]}'")
 
-            # If still none, fall back to most recent available date in DB (helps environments without same-day data)
-            if row_count == 0:
-                latest_result = client.execute("""
-                    SELECT substr(TRIM(Date),1,10) as DateShort
-                    FROM Patients
-                    WHERE Date IS NOT NULL AND TRIM(Date) <> ''
-                    ORDER BY DateShort DESC
-                    LIMIT 1
-                """)
-                if hasattr(latest_result, 'rows') and latest_result.rows:
-                    latest_date = latest_result.rows[0][0]
-                    if latest_date and latest_date != today:
-                        logger.info(f"[Pharmacy] No patients for today; falling back to latest date: {latest_date}")
-                        patients_display_date = latest_date
-                        patients_result = client.execute("""
-                            SELECT DISTINCT PName, PhoneNo, UHId 
-                            FROM Patients 
-                            WHERE substr(TRIM(Date), 1, 10) = ?
-                            ORDER BY PName
-                        """, [latest_date])
-                        row_count = len(getattr(patients_result, 'rows', []) or [])
-                        logger.info(f"[Pharmacy] Fallback loaded {row_count} patient(s) for date {latest_date}")
-            
             if row_count > 0:
                 logger.info(f"[Pharmacy] Sample patient rows: {patients_result.rows[:3]}")
             today_patients = [dict(zip(['PName', 'Phone', 'UHId'], row)) for row in getattr(patients_result, 'rows', [])]
@@ -448,7 +395,6 @@ def pharmacy():
                              today_patients=today_patients,
                              medicines=medicines,
                              today_date=today,
-                             patients_display_date=patients_display_date,
                              active_page='pharmacy')
         
     except Exception as e:
@@ -458,5 +404,4 @@ def pharmacy():
                              today_patients=[],
                              medicines=[],
                              today_date=datetime.now().strftime('%Y-%m-%d'),
-                             patients_display_date=datetime.now().strftime('%Y-%m-%d'),
                              active_page='pharmacy')
