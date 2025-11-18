@@ -1,8 +1,554 @@
 {% extends "base.html" %}
-{% block title %}View Sales - IMS{% endblock %}
+{% block title %}View Sales{% endblock %}
 {% block content %}
-  <div class="container">
-    <h2 class="page-title">View Sales</h2>
-    <p>Coming soon.</p>
+
+<style>
+  /* 🌿 Modern Sales Dashboard Styling */
+  .sales-card {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  h2 {
+    font-weight: 600;
+    color: #198754;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: #6c757d;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+  }
+
+  .filter-indicator {
+    background: #e9f7ef;
+    border-left: 4px solid #198754;
+    padding: 10px 15px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 20px;
+  }
+
+  /* Filters Layout */
+  .filters {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+  }
+
+  .filter-group {
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .filter-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .filter-group input {
+    border-radius: 6px;
+    font-size: 0.9rem;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+  }
+
+  .btn-success {
+    background-color: #198754;
+    border: none;
+    padding: 8px 20px;
+  }
+
+  .btn-success:hover {
+    background-color: #157347;
+  }
+
+  .btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+    padding: 8px 20px;
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  /* Summary Box */
+  .summary {
+    background: #e9f7ef;
+    color: #198754;
+    border-radius: 10px;
+    padding: 15px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Table Styling with Fixed Header */
+  .table-wrapper {
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .table-container {
+    max-height: 600px;
+    overflow-y: auto;
+    position: static;
+  }
+
+  .main-table {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .main-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+
+  .main-table thead th {
+    background-color: #198754;
+    color: #fff;
+    white-space: nowrap;
+    padding: 12px 15px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .main-table td {
+    color: #212529;
+    padding: 10px 15px;
+    vertical-align: middle;
+    text-align: center;
+    background-color: #fff;
+    position: relative;
+  }
+
+  /* Column Widths */
+  .col-expand { width: 50px; }
+  .col-timestamp { width: 150px; }
+  .col-uhid { width: 120px; }
+  .col-phone { width: 120px; }
+  .col-patient { width: 150px; }
+  .col-discount { width: 100px; }
+  .col-total { width: 120px; }
+  .col-payment { width: 100px; }
+  .col-comments { width: 150px; }
+  .col-invoice { width: 120px; }
+
+  /* Expandable Rows */
+  .invoice-header {
+    cursor: pointer;
+    transition: 0.3s ease;
+    background-color: #f8f9fa;
+    border-left: 4px solid #198754;
+  }
+
+  .invoice-header:hover {
+    background-color: #e9f7ef !important;
+  }
+
+  .invoice-header.active {
+    background-color: #d1e7dd !important;
+    border-left: 4px solid #0f5132;
+    font-weight: 600;
+  }
+
+  .expand-icon {
+    transition: 0.3s ease;
+    color: #198754;
+    font-weight: bold;
+    transform: rotate(0deg);
+
+  }
+
+  .invoice-header.active .expand-icon {
+  transform: rotate(90deg);   /* expanded → down */
+  }
+
+  .medicine-details-row {
+    background-color: #fafafa !important;
+    display: none;
+  }
+
+  .medicine-details-row.expanded {
+    display: table-row;
+  }
+
+  .medicine-details-row > td {
+    padding: 0 !important;
+    background-color: transparent !important;
+    border-top: none;
+  }
+
+  .medicine-details {
+    padding: 20px;
+    background: linear-gradient(90deg, #f8f9fa, #ffffff);
+    border-left: 3px solid #6c757d;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .medicine-table {
+    margin: 0;
+    width: 100%;
+  }
+
+  .medicine-table thead th {
+    background-color: #6c757d;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  .medicine-table tbody td {
+    padding: 8px 12px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .filter-group { min-width: 100%; }
+    .filter-actions { width: 100%; }
+    .filter-actions .btn { flex: 1; }
+
+    .summary { flex-direction: column; gap: 10px; }
+
+    .table-container { font-size: 0.8rem; }
+    .medicine-table { font-size: 0.75rem; }
+
+    .col-comments, .col-uhid { display: none; }
+  }
+</style>
+
+<div class="sales-card">
+  <h2 class="text-center">Sales Details</h2>
+
+  <!-- Subtitle -->
+  <div class="subtitle">
+    {% if pname or selected_date or uhid or invoice_id or phone %}
+      Showing filtered results
+      {% if pname %} for patient: <strong>{{ pname }}</strong>{% endif %}
+      {% if selected_date %} on date: <strong>{{ selected_date }}</strong>{% endif %}
+      {% if uhid %} with UHID: <strong>{{ uhid }}</strong>{% endif %}
+      {% if invoice_id %} for invoice: <strong>{{ invoice_id }}</strong>{% endif %}
+      {% if phone %} with phone: <strong>{{ phone }}</strong>{% endif %}
+    {% else %}
+      Showing all sales records
+    {% endif %}
   </div>
+
+  <!-- Filters -->
+  <form method="POST" action="{{ url_for('view_sales') }}" autocomplete="off">
+    <div class="filters">
+      <div class="filter-row">
+        
+        <div class="filter-group">
+          <label>Date</label>
+          <input type="date" class="form-control" id="date" name="date" value="{{ selected_date or '' }}">
+        </div>
+
+        <div class="filter-group">
+          <label>Patient</label>
+          <input type="text" class="form-control" id="pname" name="pname" placeholder="Name" value="{{ pname or '' }}">
+        </div>
+
+        <div class="filter-group">
+          <label>UHID</label>
+          <input type="text" class="form-control" id="uhid" name="uhid" placeholder="UHID" value="{{ uhid or '' }}">
+        </div>
+
+        <div class="filter-group">
+          <label>Invoice ID</label>
+          <input type="text" class="form-control" id="invoiceid" name="invoiceid" placeholder="Invoice ID" value="{{ invoice_id or '' }}">
+        </div>
+
+        <div class="filter-group">
+          <label>Phone</label>
+          <input type="text" class="form-control" id="phonenum" name="phonenum" placeholder="Phone number" value="{{ phone or '' }}">
+        </div>
+
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-success" onclick="clearFormOnSubmit()">Filter</button>
+        <a href="{{ url_for('view_sales') }}" class="btn btn-outline-secondary" onclick="clearForm()">Clear</a>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- Active Filters -->
+  {% if pname or selected_date or uhid or invoice_id or phone %}
+  <div class="filter-indicator">
+    <small>
+      <strong>Active filters:</strong>
+      {% if pname %} Patient: {{ pname }}{% endif %}
+      {% if selected_date %} • Date: {{ selected_date }}{% endif %}
+      {% if uhid %} • UHID: {{ uhid }}{% endif %}
+      {% if invoice_id %} • Invoice: {{ invoice_id }}{% endif %}
+      {% if phone %} • Phone: {{ phone }}{% endif %}
+    </small>
+  </div>
+  {% endif %}
+
+  <!-- Summary -->
+  {% if summary %}
+  <div class="summary">
+    <div class="summary-item">Total Invoices: {{ summary.total_invoices }}</div>
+    <div class="summary-item">Total Amount: ₹{{ summary.total_btotal }}</div>
+  </div>
+  {% endif %}
+
+  <!-- Table -->
+  {% if grouped_invoices %}
+  <div class="table-wrapper">
+    <div class="table-container">
+
+      <table class="table table-bordered table-hover align-middle text-center main-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Timestamp</th>
+            <th>UHID</th>
+            <th>Phone</th>
+            <th>Patient</th>
+            <th>Discount</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Comments</th>
+            <th>Invoice</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% for invoice_id, items in grouped_invoices.items() %}
+          {% set first_item = items[0] %}
+          {% set summary_item = items | selectattr("8", "ne", "") | first %}
+          {% if not summary_item %}
+            {% set summary_item = first_item %}
+          {% endif %}
+
+          <!-- Main Row -->
+          <tr class="invoice-header invoice-row-{{ loop.index0 % 5 }}"
+              onclick="toggleInvoiceDetails('{{ loop.index }}')">
+
+            <td class="col-expand">
+                <i id="expandIcon{{ loop.index }}" class="expand-icon">▶</i>
+            </td>
+
+            <td>{{ first_item[0] }}</td>
+            <td>{{ first_item[1] if first_item[1] else '-' }}</td>
+            <td>{{ first_item[2] if first_item[2] else '-' }}</td>
+            <td><strong>{{ first_item[3] }}</strong></td>
+            <td>₹{{ summary_item[7] or '0' }}</td>
+            <td class="text-success"><strong>₹{{ summary_item[8] or '0' }}</strong></td>
+
+            <td>
+              <span class="badge 
+                {% if summary_item[9]=='Cash' %}bg-primary
+                {% elif summary_item[9]=='UPI' %}bg-info
+                {% elif summary_item[9]=='Both' %}bg-warning
+                {% else %}bg-secondary{% endif %}">
+                {{ summary_item[9] or 'N/A' }}
+              </span>
+            </td>
+
+            <td>{{ summary_item[10] or '-' }}</td>
+            <td><strong class="text-primary">{{ invoice_id }}</strong></td>
+          </tr>
+
+          <!-- Expanded Row -->
+          <tr class="medicine-details-row" id="medicineDetails{{ loop.index }}">
+            <td colspan="10">
+
+              <div class="medicine-details">
+                <h6 class="mb-3 text-muted">
+                  <i class="fas fa-pills me-2"></i>
+                  Medicine Details for Invoice: <strong>{{ invoice_id }}</strong>
+                </h6>
+
+                <div class="table-responsive">
+                  <table class="table table-sm medicine-table">
+                    <thead>
+                      <tr>
+                        <th>Medicine</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Subtotal</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {% for item in items %}
+                      <tr>
+                        <td>{{ item[4] }}</td>
+                        <td>{{ item[5] }}</td>
+                        <td>
+                          {% if item[5]|int > 0 %}
+                            ₹{{ "%.2f"|format(item[6]|float / item[5]|int) }}
+                          {% else %}
+                            ₹{{ item[6] }}
+                          {% endif %}
+                        </td>
+                        <td><strong>₹{{ item[6] }}</strong></td>
+                      </tr>
+                      {% endfor %}
+
+                      <tr style="background:#e9ecef;font-weight:bold;">
+                        <td colspan="3" class="text-end">Invoice Total:</td>
+                        <td class="text-success">₹{{ summary_item[8] or '0' }}</td>
+                      </tr>
+
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+
+            </td>
+          </tr>
+
+          {% endfor %}
+
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning text-center mt-4">
+    {% if pname or selected_date or uhid or invoice_id or phone %}
+      No sales data found for the applied filters.
+    {% else %}
+      No sales data available.
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- JavaScript -->
+<script>
+
+  function toggleInvoiceDetails(index) {
+    const row = document.getElementById("medicineDetails" + index);
+    const icon = document.getElementById("expandIcon" + index);
+    const header = event.currentTarget; // Get the clicked header row
+  
+    if (row.classList.contains("expanded")) {
+      row.classList.remove("expanded");
+      header.classList.remove("active");
+      icon.style.transform = "rotate(90deg)"; // Arrow points right when collapsed
+    } else {
+      closeAllExpandedRows(); // Close other open rows
+      row.classList.add("expanded");
+      header.classList.add("active");
+      icon.style.transform = "rotate(0deg)"; // Arrow points down when expanded
+      ensureHeaderVisible(header);
+    }
+  }
+  
+  function closeAllExpandedRows() {
+    document.querySelectorAll(".medicine-details-row").forEach(r => r.classList.remove("expanded"));
+    document.querySelectorAll(".invoice-header").forEach(h => h.classList.remove("active"));
+    document.querySelectorAll(".expand-icon").forEach(i => i.style.transform = "rotate(90deg)"); // Reset all icons to right
+  }
+  
+  function ensureHeaderVisible(row) {
+    const container = document.querySelector(".table-container");
+    const cRect = container.getBoundingClientRect();
+    const rRect = row.getBoundingClientRect();
+  
+    // If the row header is below the visible part of the container
+    if (rRect.bottom > cRect.bottom - 100) {
+      container.scrollTop += rRect.bottom - cRect.bottom + 150;
+    }
+    // If the row header is above the visible part (e.g., when scrolling up)
+    else if (rRect.top < cRect.top + thead.offsetHeight) { // thead.offsetHeight for sticky header height
+       container.scrollTop += rRect.top - cRect.top - thead.offsetHeight; // Adjust to bring it into view
+    }
+  }
+  
+  function clearForm() {
+    event.preventDefault();
+    document.querySelectorAll(".filter-group input").forEach(i => i.value = "");
+    window.location.href = "{{ url_for('view_sales') }}";
+  }
+  
+  function clearFormOnSubmit() { return true; }
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    closeAllExpandedRows(); // Ensure all are closed on load
+  
+    const container = document.querySelector(".table-container");
+    const thead = document.querySelector(".main-table thead");
+  
+    if (container && thead) {
+      container.addEventListener("scroll", () => {
+        thead.style.boxShadow =
+          container.scrollTop > 0 ? "0 2px 8px rgba(0,0,0,0.15)" : "none";
+      });
+    }
+  
+    document.querySelectorAll("input").forEach(inp => {
+      inp.setAttribute("autocomplete", "off");
+      inp.setAttribute("autocorrect", "off");
+      inp.setAttribute("autocapitalize", "off");
+      inp.setAttribute("spellcheck", "false");
+    });
+  });
+  
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      document.querySelectorAll('input[type="text"]').forEach(i => { if (!i.value) i.value = ""; });
+    }, 100);
+  });
+  
+  </script>
+
 {% endblock %}

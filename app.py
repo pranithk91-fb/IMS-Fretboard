@@ -93,12 +93,122 @@ def pharmacy():
         return redirect(url_for("login"))
     return redirect(url_for("pharmacy.pharmacy")) # Because the data is loaded in the blueprint route
 
-@app.route("/view-sales")
+@app.route("/view-sales", methods=["GET", "POST"])
 def view_sales():
-    """View sales page"""
     if "username" not in session:
         return redirect(url_for("login"))
-    return render_template("view_sales.html", active_page="view_sales")
+
+    from db_connect import client
+
+    # --- Default: today's date ---
+    today = datetime.now().strftime("%Y-%m-%d")
+    selected_date = request.form.get("date", today)
+    uhid = request.form.get("uhid", "").strip()
+    invoice_id = request.form.get("invoiceid", "").strip()  # ← user input
+    phone = request.form.get("phonenum", "").strip()
+    pname = request.form.get("pname", "").strip()
+
+    # --- Base Query using your view ---
+    query = "SELECT * FROM vw_dailyPharmacyDetailsDemo WHERE 1=1"
+    params = []
+
+    # --- Filters ---
+    if selected_date:
+        query += " AND substr(timestamp, 1, 10) = ?"
+        params.append(selected_date)
+
+    if pname:
+        query += " AND PName LIKE ?"
+        params.append(f"%{pname}%")
+
+    if uhid:
+        query += " AND UHId LIKE ?"
+        params.append(f"%{uhid}%")
+
+    if invoice_id:
+        query += " AND InvoiceId LIKE ?"
+        params.append(f"%{invoice_id}%")
+
+    if phone:
+        query += " AND PhoneNo LIKE ?"
+        params.append(f"%{phone}%")
+
+    query += " ORDER BY timestamp DESC, InvoiceId"
+
+    # --- Fetch filtered sales data ---
+    try:
+        result = client.execute(query, params)
+        sales_data = result.rows
+    except Exception as e:
+        print("❌ Error fetching sales data:", e)
+        sales_data = []
+
+    # --- Group data by InvoiceId ---
+    grouped_invoices = {}
+    total_btotal = 0
+
+    for row in sales_data:
+        row_invoice_id = row[11]  # ← FIXED: use a different variable
+
+        if row_invoice_id not in grouped_invoices:
+            grouped_invoices[row_invoice_id] = []
+
+        grouped_invoices[row_invoice_id].append(row)
+
+        # BTotal is index 8
+        if row[8] and row[8] != "":
+            try:
+                total_btotal += float(row[8])
+            except (ValueError, TypeError):
+                pass
+
+    # --- Summary ---
+    summary_query = """
+        SELECT 
+            COUNT(DISTINCT InvoiceId) AS total_invoices,
+            SUM(CASE WHEN PaymentMode = 'Cash' THEN TotalAmount ELSE 0 END) AS cash_total,
+            SUM(CASE WHEN PaymentMode = 'UPI' THEN TotalAmount ELSE 0 END) AS upi_total
+        FROM MedicineInvoices
+        WHERE DATE(InvoiceDate) = ?
+    """
+
+    summary_result = (
+        client.execute(summary_query, [selected_date]).rows[0]
+        if client else (0, 0, 0)
+    )
+
+    summary = {
+        "total_invoices": summary_result[0] if summary_result else 0,
+        "cash_total": summary_result[1] if summary_result else 0,
+        "upi_total": summary_result[2] if summary_result else 0,
+        "total_btotal": round(total_btotal, 2)
+    }
+
+    # --- Label text ---
+    label = f"Showing data for {datetime.strptime(selected_date, '%Y-%m-%d').strftime('%d-%b-%y')}"
+
+    if pname:
+        label = f"Showing data for patient name - {pname}"
+    elif uhid:
+        label = f"Showing data for UHID - {uhid}"
+    elif invoice_id:
+        label = f"Showing data for Invoice ID - {invoice_id}"
+    elif phone:
+        label = f"Showing data for Phone - {phone}"
+
+    return render_template(
+        "view_sales.html",
+        active_page="view_sales",
+        sales_data=sales_data,
+        grouped_invoices=grouped_invoices,
+        label=label,
+        summary=summary,
+        selected_date=selected_date,
+        pname=pname,
+        uhid=uhid,
+        invoice_id=invoice_id,  # ← stays user input only
+        phone=phone
+    )
 
 @app.route("/returns")
 def returns():
