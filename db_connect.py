@@ -1,5 +1,6 @@
 import os, sqlite3
 from libsql_client import create_client_sync
+from decouple import config
 try:
     from dotenv import load_dotenv
     load_dotenv()  # loads .env locally; harmless on Render
@@ -31,8 +32,8 @@ class SQLiteClient:
 if USE_SQLITE:
     client = SQLiteClient(SQLITE_PATH)
 else:
-    db_url = os.getenv("TURSO_URL")
-    auth_token = os.getenv("TURSO_AUTH_TOKEN")
+    db_url = config ("TURSO_URL")
+    auth_token = config("TURSO_AUTH_TOKEN")
     if not db_url or not auth_token:
         raise RuntimeError("Missing TURSO_URL or TURSO_TOKEN in .env")
 
