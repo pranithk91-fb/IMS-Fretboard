@@ -258,6 +258,9 @@ def view_sales():
         phone=phone,
         pagination=pagination  # Pass pagination object to template
     )
+
+
+
 @app.route("/returns")
 def returns():
     """Returns management page"""
